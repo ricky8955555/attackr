@@ -310,7 +310,7 @@ async fn execute_docker_step<P: AsRef<Path>>(
         tar.finish()?;
     }
 
-    let buildargs = HashMap::from([("FLAG", flag)]);
+    let buildargs = HashMap::from([("ATTACKR_FLAG", flag)]);
 
     let name = uuid::Uuid::new_v4().as_simple().to_string();
 

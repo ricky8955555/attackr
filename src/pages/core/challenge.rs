@@ -21,7 +21,7 @@ use crate::{
             challenge::{get_challenge, list_challenges},
             problemset::list_problemsets,
             solved::{
-                count_challenge_effective_solved, get_solved, list_ordered_effective_solved,
+                count_challenge_effective_solved, get_solved, list_effective_solved,
                 list_user_solved,
             },
         },
@@ -76,7 +76,7 @@ async fn index(jar: &CookieJar<'_>, db: Db, flash: Option<FlashMessage<'_>>) -> 
 
     check_event_availability(Some(&user))?;
 
-    let all_solved: HashMap<_, _> = list_ordered_effective_solved(&db)
+    let all_solved: HashMap<_, _> = list_effective_solved(&db)
         .await
         .resp_expect("获取用户解题信息失败")?
         .into_iter()

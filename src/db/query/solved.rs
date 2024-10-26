@@ -114,7 +114,7 @@ pub async fn list_challenge_ordered_effective_solved(
         .collect())
 }
 
-pub async fn list_ordered_effective_solved(db: &Db) -> QueryResult<Vec<SolvedWithSubmission>> {
+pub async fn list_effective_solved(db: &Db) -> QueryResult<Vec<SolvedWithSubmission>> {
     Ok(db
         .run(move |conn| {
             solved::table
@@ -125,7 +125,6 @@ pub async fn list_ordered_effective_solved(db: &Db) -> QueryResult<Vec<SolvedWit
                         .and(users::enabled.eq(true)),
                 )
                 .select((Solved::as_select(), Submission::as_select()))
-                .order(submissions::time.asc())
                 .load(conn)
         })
         .await?

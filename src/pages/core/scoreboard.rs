@@ -13,7 +13,7 @@ use crate::{
         query::{
             challenge::{list_challenges, list_problemset_challenges},
             problemset::list_problemsets,
-            solved::list_ordered_effective_solved,
+            solved::list_effective_solved,
             user::list_active_challengers,
         },
         Db,
@@ -67,7 +67,7 @@ async fn index(
     .filter(is_publicly_available)
     .collect();
 
-    let solved: HashMap<_, _> = list_ordered_effective_solved(&db)
+    let solved: HashMap<_, _> = list_effective_solved(&db)
         .await
         .resp_expect("获取解题信息失败")?
         .into_iter()
@@ -93,13 +93,12 @@ async fn index(
                 })
                 .collect();
 
-            let dataset: Vec<_> = solved
+            let mut dataset: Vec<_> = solved
                 .iter()
                 .filter_map(|x| x.solved.map(|data| (&data.submission, x.points)))
                 .collect();
 
-            // unnecessary here because query will do it for us.
-            // dataset.sort_unstable_by_key(|x| x.0.time);
+            dataset.sort_unstable_by_key(|x| x.0.time);
 
             let mut dataset = dataset.into_iter().fold(vec![zero_point], |mut v, x| {
                 v.push((x.0.time, v.last().unwrap().1 + x.1));

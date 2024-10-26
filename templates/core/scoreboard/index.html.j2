@@ -24,45 +24,47 @@
   <canvas id="scoreChart"></canvas>
 </div>
 
-<table class="table mb-5">
-  <thead>
-    <tr>
-      <th scope="col">排名</th>
-      <th scope="col">用户名</th>
-      {% for challenge in challenges %}
-      <th>{{ challenge.name }}</th>
+<div class="mb-5 table-responsive">
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">排名</th>
+        <th scope="col">用户名</th>
+        {% for challenge in challenges %}
+        <th>{{ challenge.name }}</th>
+        {% endfor %}
+        <th>总得分</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for progress in progresses %}
+      {% set solved = progress.solved %}
+      {% set dataset = progress.dataset %}
+      {% set user = progress.user %}
+      <tr>
+        <th scope="row">{{ loop.index }}</th>
+        <td>
+          <a href="/user/{{ user.id }}" class="link-secondary link-offset-2 link-underline-opacity-0">
+            {{ user.username }}</a>
+          </th>
+          {% for solved in solved %}
+        </td>
+        <td>
+          {{ solved.points }}
+        </td>
+        {% endfor %}
+        <td>
+          {% if dataset %}
+          {{ dataset[-1][1] }}
+          {% else %}
+          0
+          {% endif %}
+        </td>
+      </tr>
       {% endfor %}
-      <th>总得分</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for progress in progresses %}
-    {% set solved = progress.solved %}
-    {% set dataset = progress.dataset %}
-    {% set user = progress.user %}
-    <tr>
-      <th scope="row">{{ loop.index }}</th>
-      <td>
-        <a href="/user/{{ user.id }}" class="link-secondary link-offset-2 link-underline-opacity-0">
-          {{ user.username }}</a>
-        </th>
-        {% for solved in solved %}
-      </td>
-      <td>
-        {{ solved.points }}
-      </td>
-      {% endfor %}
-      <td>
-        {% if dataset %}
-        {{ dataset[-1][1] }}
-        {% else %}
-        0
-        {% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+    </tbody>
+  </table>
+</div>
 {% endblock %}
 
 {% block script %}

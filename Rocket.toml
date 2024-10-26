@@ -1,6 +1,2 @@
 [global.databases]
 database = { url = "db.sqlite" }
-
-[global.limits]
-data-form = "512MiB"
-file = "128MiB"

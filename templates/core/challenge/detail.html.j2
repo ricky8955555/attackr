@@ -90,7 +90,7 @@
 </div>
 {% endif %}
 
-{% if not challenge.dynamic or artifact %}
+{% if not solved %}
 <div class="mb-5">
   <h5>Flag 提交</h5>
   <form method="post" action="/challenge/{{ challenge.id }}/solve">

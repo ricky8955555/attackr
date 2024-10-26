@@ -26,8 +26,8 @@ use crate::{
             artifact::{delete_artifact, get_artifact, list_challenge_artifacts, update_artifact},
             challenge::{delete_challenge, get_challenge, list_challenges, update_challenge},
             solved::{
-                add_solved, count_challenge_effective_solved,
-                list_challenge_ordered_effective_solved, update_all_solved,
+                add_solved, count_challenge_effective_solved, list_challenge_effective_solved,
+                update_all_solved,
             },
             submission::add_submission,
         },
@@ -204,8 +204,10 @@ pub fn calculate_user_points(challenge: &Challenge, solved: &Solved) -> f64 {
 }
 
 async fn recalculate_challenge_points_consumed(db: &Db, mut challenge: Challenge) -> Result<()> {
-    let solved = list_challenge_ordered_effective_solved(db, challenge.id.unwrap()).await?;
+    let mut solved = list_challenge_effective_solved(db, challenge.id.unwrap()).await?;
     let mut results = Vec::with_capacity(solved.len());
+
+    solved.sort_unstable_by_key(|x| x.submission.time);
 
     for (idx, mut data) in solved.into_iter().enumerate() {
         let factor = calculate_factor(challenge.initial, idx as i64).await?;

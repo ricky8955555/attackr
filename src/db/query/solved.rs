@@ -90,7 +90,7 @@ pub async fn count_challenge_effective_solved(db: &Db, id: i32) -> QueryResult<i
     .await
 }
 
-pub async fn list_challenge_ordered_effective_solved(
+pub async fn list_challenge_effective_solved(
     db: &Db,
     id: i32,
 ) -> QueryResult<Vec<SolvedWithSubmission>> {
@@ -105,7 +105,6 @@ pub async fn list_challenge_ordered_effective_solved(
                         .and(submissions::challenge.eq(id)),
                 )
                 .select((Solved::as_select(), Submission::as_select()))
-                .order(submissions::time.asc())
                 .load(conn)
         })
         .await?

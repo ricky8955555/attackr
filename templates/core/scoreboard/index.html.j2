@@ -87,7 +87,6 @@
   for (const [username, points] of zip(users, all_points)) {
     points.unshift([start_at, 0]);
     points.push([now, points.at(-1)[1]]);
-    console.log(points);
 
     const data = points.map(point => { return { x: point[0], y: point[1] } });
     datasets.push({ label: username, data: data, stepped: true });

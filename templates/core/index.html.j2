@@ -1,0 +1,26 @@
+{% extends "core/base" %}
+
+{% block content %}
+  <div class="position-absolute top-50 start-50 w-100 translate-middle">
+    <div class="container text-center">
+      <h1 class="mt-5">{{ event.name }}</h1>
+      {% if event.start_at is not none or event.end_at is not none %}
+      {% from 'functions/time' import display as display_time %}
+      <p>比赛时间: {{ display_time(event.start_at) }} ~ {{ display_time(event.end_at) }}</p>
+      {% endif %}
+      <p class="fs-5 fw-semibold">
+        {% if period == -1 %}
+        <span class="text-warning">即将开始</span>
+        {% elif period == 0 %}
+        <span class="text-info fs-5">正在进行</span>
+        {% elif period == 1 %}
+        <span class="text-secondary fs-5">比赛结束</span>
+        {% endif %}
+      </p>
+      <div class="mb-3" style="white-space: pre-line">{{ event.description }}</div>
+      <a class="btn btn-outline-primary" href="/user">进入</a>
+      <a class="btn btn-outline-secondary" href="/user/register">注册</a>
+      <a class="btn btn-outline-info" href="/scoreboard">观战</a>
+    </div>
+  </div>
+{% endblock %}

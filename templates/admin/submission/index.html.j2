@@ -1,0 +1,106 @@
+{% extends "admin/base" %}
+
+{% block header %}
+<h1 class="mt-5 text-center">提交记录</h1>
+{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <div class="btn-group">
+    <div class="dropdown">
+      <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        {% if user %}
+        {{ user.id }} - {{ user.username }}
+        {% else %}
+        选择用户…
+        {% endif %}
+      </button>
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="/admin/submission/?user=&challenge={{ challenge.id }}">none</a></li>
+        {% for user in users %}
+        <li>
+          <a class="dropdown-item" href="/admin/submission/?user={{ user.id }}&challenge={{ challenge.id }}">
+            {{ user.id }} - {{ user.username }}
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="btn-group">
+    <div class="dropdown">
+      <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        {% if challenge %}
+        {{ challenge.id }} - {{ challenge.name }}
+        {% else %}
+        选择题目…
+        {% endif %}
+      </button>
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="/admin/submission/?user={{ user.id }}&challenge=">none</a></li>
+        {% for challenge in challenges %}
+        <li>
+          <a class="dropdown-item" href="/admin/submission/?user={{ user.id }}&challenge={{ challenge.id }}">
+            {{ challenge.id }} - {{ challenge.name }}
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="btn-toolbar mb-3 justify-content-end">
+  <div class="btn-group">
+    <a class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#clearModal">清除</a>
+  </div>
+</div>
+
+<table class="table mb-5">
+  <thead>
+    <tr>
+      <th scope="col">ID</th>
+      <th scope="col">用户名</th>
+      <th scope="col">题目</th>
+      <th scope="col">提交 Flag</th>
+      <th scope="col">提交时间</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for data in submissions | reverse %}
+    {% set submission = data.submission %}
+    <tr>
+      <th scope="row">{{ submission.id }}</th>
+      <td>{{ data.user.username }}</td>
+      <td>{{ data.challenge.name }}</td>
+      <td>{{ submission.flag }}</td>
+      <td>
+        {% from "functions/time" import display as display_time %}
+        {{ display_time(submission.time) }}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="modal fade" id="clearModal" tabindex="-1" aria-labelledby="clearModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="clearModalLabel">清除</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        确定清除吗？清除将会删除当前页面所显示的所有提交记录。
+      </div>
+      <div class="modal-footer">
+        <form method="post">
+          <input type="hidden" name="_method" value="delete">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="submit" class="btn btn-danger">清除</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+.md-block strong {
+    color: brown;
+}
+
+.md-block em {
+    color: deepskyblue;
+}
+
+.md-block del {
+    color: gray;
+}
+
+.md-block blockquote {
+    border-left: 3px solid violet;
+    color: darkviolet;
+    padding-left: 0.75rem;
+}

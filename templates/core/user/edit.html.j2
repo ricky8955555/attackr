@@ -1,0 +1,27 @@
+{% extends "core/base" %}
+
+{% block header %}
+<h1 class="mt-5 text-center">修改信息</h1>
+{% endblock %}
+
+{% block content %}
+<form method="post">
+  <div class="input-group mb-3">
+    <span class="input-group-text">用户名</span>
+    <input type="text" name="username" class="form-control" placeholder="用户名 (置空不修改)" value="{{ user.username }}" required>
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">密码</span>
+    <input type="password" name="password" class="form-control" placeholder="密码 (置空不修改)">
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">联系方式</span>
+    <input type="text" name="contact" class="form-control" placeholder="联系方式 (置空不修改)" value="{{user.contact}}" required>
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">Email</span>
+    <input type="email" name="email" class="form-control" placeholder="Email (置空不修改)" value="{{user.email}}" required>
+  </div>
+  <button type="submit" class="btn btn-outline-primary mb-3">修改</button>
+</form>
+{% endblock %}

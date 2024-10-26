@@ -1,0 +1,63 @@
+{% extends "admin/base" %}
+
+{% block header %}
+<h1 class="mt-5 text-center">修改用户信息</h1>
+{% endblock %}
+
+{% block content %}
+<form method="post">
+  <div class="input-group mb-3">
+    <span class="input-group-text">用户名</span>
+    <input type="text" name="username" class="form-control" placeholder="用户名 (置空不修改)" value="{{ user.username }}">
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">密码</span>
+    <input type="password" name="password" class="form-control" placeholder="密码 (置空不修改)">
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">联系方式</span>
+    <input type="text" name="contact" class="form-control" placeholder="联系方式 (置空不修改)" value="{{ user.contact }}">
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">Email</span>
+    <input type="email" name="email" class="form-control" placeholder="Email (置空不修改)" value="{{ user.email }}">
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">权限组</span>
+    <select name="role" class="form-select">
+      {% for role in roles %}
+        <option value="{{ role }}" {% if role == user.role %}selected{% endif %}>
+          {{ role }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="form-check mb-3">
+    <input class="form-check-input" type="checkbox" name="enabled" value="true" {% if user.enabled %}checked{% endif %}>
+    <label class="form-check-label">启用</label>
+  </div>
+  <button type="submit" class="btn btn-outline-primary">修改</button>
+  <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">删除</button>
+</form>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="deleteModalLabel">删除用户</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        确定删除吗？删除用户将会删除所有相关的数据（包括解题记录等）。
+      </div>
+      <div class="modal-footer">
+        <form method="post">
+          <input type="hidden" name="_method" value="delete">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="submit" class="btn btn-danger">删除</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

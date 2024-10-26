@@ -1,0 +1,5 @@
+export calculate = |raw, solved|
+  minimum = 1.max (raw * 0.1)
+  step = raw * 0.1
+  result = raw - (solved * step)
+  return result.max minimum

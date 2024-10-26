@@ -1,0 +1,36 @@
+{% extends "admin/base" %}
+
+{% block header %}
+<h1 class="mt-5 text-center">题集列表</h1>
+{% endblock %}
+
+{% block content %}
+<div class="btn-toolbar mb-3 justify-content-end">
+  <div class="btn-group">
+    <a href="/admin/problemset/new" class="btn btn-outline-primary">添加</a>
+  </div>
+</div>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">ID</th>
+      <th scope="col">名称</th>
+      <th scope="col">操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for problemset in problemsets %}
+    <tr>
+      <th scope="row">{{ problemset.id }}</th>
+      <td>{{ problemset.name }}</td>
+      <td>
+        <a title="编辑" href="/admin/problemset/{{ problemset.id }}" class="text-decoration-none">
+          <img src="/static/icons/pen-to-square-regular.svg" height="20">
+        </a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

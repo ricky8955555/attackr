@@ -1,0 +1,46 @@
+[package]
+name = "attackr"
+version = "0.1.0"
+edition = "2021"
+
+[lints.clippy]
+result_large_err = "allow"
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = "s"
+panic = "abort"
+strip = "symbols"
+
+[dependencies]
+anyhow = "1.0.86"
+async-tempfile = { version = "0.6.0", features = ["uuid"] }
+bcrypt = "0.15.1"
+bollard = { version = "0.17.0", features = ["buildkit"] }
+diesel = { version = "2.2.2", features = ["returning_clauses_for_sqlite_3_35", "time"] }
+diesel-derive-enum = { version = "2.1.0", features = ["sqlite"] }
+diesel_migrations = "2.2.0"
+either = { version = "1.13.0", features = ["serde"] }
+flate2 = "1.0.33"
+futures-util = "0.3.30"
+itertools = "0.13.0"
+jsonwebtoken = "9.3.0"
+koto = "0.14.1"
+log = "0.4.22"
+num_enum = "0.7.3"
+port_check = "0.2.1"
+rocket = { version = "0.5.1", features = ["json"] }
+rocket_dyn_templates = { version = "0.2.0", features = ["minijinja"] }
+rocket_sync_db_pools = { version = "0.1.0", features = ["diesel_sqlite_pool"] }
+serde = { version = "1.0.207", features = ["derive"] }
+serde_json = "1.0.127"
+serde_yml = "0.0.12"
+sha2 = "0.10.8"
+strum = { version = "0.26.3", features = ["derive"] }
+tar = "0.4.41"
+thiserror = "1.0.64"
+time = { version = "0.3.36", features = ["serde", "serde-human-readable"] }
+tokio = { version = "1.40.0", features = ["process", "rt"] }
+uuid = { version = "1.10.0", features = ["v4"] }
+validator = { version = "0.18.1", features = ["derive"] }

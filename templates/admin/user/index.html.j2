@@ -1,0 +1,50 @@
+{% extends "admin/base" %}
+
+{% block header %}
+<h1 class="mt-5 text-center">用户列表</h1>
+{% endblock %}
+
+{% block content %}
+{% for enabled, users in users | groupby("enabled") | sort %}
+<h5>
+{% if not enabled %}
+未启用用户
+{% else %}
+普通用户
+{% endif %}
+</h5>
+<table class="table mb-5">
+  <thead>
+    <tr>
+      <th scope="col">ID</th>
+      <th scope="col">用户名</th>
+      <th scope="col">联系方式</th>
+      <th scope="col">Email</th>
+      <th scope="col">权限组</th>
+      <th scope="col">启用</th>
+      <th scope="col">操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <th scope="row">{{ user.id }}</th>
+      <td>{{ user.username }}</td>
+      <td>{{ user.contact }}</td>
+      <td>{{ user.email }}</td>
+      <td>{{ user.role }}</td>
+      <td>{{ user.enabled }}</td>
+      <td>
+        <a title="查看提交记录" href="/admin/submission/?user={{ user.id }}" class="text-decoration-none me-2">
+          <img src="/static/icons/file-lines-regular.svg" height="20">
+        </a>
+        <a title="编辑" href="/admin/user/{{ user.id }}" class="text-decoration-none">
+          <img src="/static/icons/pen-to-square-regular.svg" height="20">
+        </a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "admin/base" %}
+
+{% block header %}
+<h1 class="mt-5 text-center">题目列表</h1>
+{% endblock %}
+
+{% block content %}
+<div class="btn-toolbar mb-3 justify-content-end">
+  <div class="btn-group">
+    <a href="/admin/challenge/recalculate" class="btn btn-outline-danger me-2">重新计算分数</a>
+  </div>
+  <div class="btn-group">
+    <a href="/admin/challenge/new" class="btn btn-outline-primary">添加</a>
+  </div>
+</div>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">ID</th>
+      <th scope="col">名称</th>
+      <th scope="col">附属题集</th>
+      <th scope="col">类型</th>
+      <th scope="col">初始分</th>
+      <th scope="col">分数</th>
+      <th scope="col">公开</th>
+      <th scope="col">操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for problemset, challenge in challenges %}
+    <tr>
+      <th scope="row">{{ challenge.id }}</th>
+      <td>{{ challenge.name }}</td>
+      <td>
+        {% if problemset %}
+        {{ problemset.name }}
+        {% else %}
+        none
+        {% endif %}
+      </td>
+      <td>
+        {% if challenge.dynamic %}
+        动态
+        {% else %}
+        静态
+        {% endif %}
+      </td>
+      <td>{{ challenge.initial }}</td>
+      <td>{{ challenge.points }}</td>
+      <td>{{ challenge.public }}</td>
+      <td>
+        <a title="详情" href="/admin/challenge/{{ challenge.id }}/detail" class="text-decoration-none me-2">
+          <img src="/static/icons/eye-solid.svg" height="20">
+        </a>
+        <a title="查看提交记录" href="/admin/submission/?challenge={{ challenge.id }}" class="text-decoration-none me-2">
+          <img src="/static/icons/file-lines-regular.svg" height="20">
+        </a>
+        <a title="编辑" href="/admin/challenge/{{ challenge.id }}" class="text-decoration-none">
+          <img src="/static/icons/pen-to-square-regular.svg" height="20">
+        </a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

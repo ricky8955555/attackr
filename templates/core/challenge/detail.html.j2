@@ -1,0 +1,160 @@
+{% extends "core/base" %}
+
+{% block stylesheet %}
+<link rel="stylesheet" href="/static/css/markdown.css">
+{% endblock %}
+
+{% block content %}
+
+{% if challenge.dynamic and not artifact %}
+<div class="alert alert-info" role="alert">
+  尚未构建题目，请点击“构建”按钮进行构建。产物将在构建后显示。
+</div>
+{% endif %}
+
+<div class="mb-3">
+  {% from "core/components/progress" import show_progress %}
+  <span class="me-3">{{ show_progress(solved is not none) }}</span>
+  <span>已通过 {{ solved_count }} 人</span>
+</div>
+
+<div class="ps-3 py-2 mb-5 border-3 border-start border-info rounded">
+  <h1>
+    {% if problemset %}
+    {{ problemset.name }} - {{ challenge.name }}
+    {% else %}
+    {{ challenge.name }}
+    {% endif %}
+  </h1>
+  <h6 class="text-secondary mb-4">> 分数: {{ challenge.points }} pts</h6>
+  <div class="md-block" id="description">
+    <p style="white-space: pre-line">{{ challenge.description or "(某人很懒没写介绍)" }}</p>
+  </div>
+</div>
+
+{% if artifact %}
+<div class="mb-5">
+  <h5 class="mb-3">产物</h5>
+  <div class="row row-cols-1 row-cols-lg-3">
+    {% for artifact in artifact.info %}
+    <div class="col mb-3">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">产物 {{ loop.index }}</h5>
+          <p class="card-text">类型: {{ artifact.type }}</p>
+          {% if artifact.type == "Docker" %}
+          {% if artifact.id in dockers %}
+          {% set docker = dockers[artifact.id] %}
+          {% if docker.expiry >= 0 %}
+          <p class="card-text">剩余时间: <span id="countdown" countdown="{{ docker.expiry }}">0</span> secs</p>
+          {% endif %}
+          {% if docker.ports %}
+          <p class="card-text mb-0">端口映射:</p>
+          {% for exposed, addr in docker.ports %}
+          <p class="card-text mb-0">&nbsp;&bull; {{ exposed }} &rightarrowtail; {{ addr | join(", ") }}</p>
+          {% endfor %}
+          <br>
+          {% endif %}
+          <a href="/challenge/{{ challenge.id }}/artifact/docker/{{ loop.index0 }}/stop" class="btn btn-danger">停止</a>
+          {% else %}
+          <a href="/challenge/{{ challenge.id }}/artifact/docker/{{ loop.index0 }}/run" class="btn btn-primary">启动</a>
+          {% endif %}
+          {% elif artifact.type == "Binary" %}
+          <p class="card-text">文件名: {{ artifact.path }}</p>
+          <a href="/challenge/{{ challenge.id }}/artifact/binary/{{ loop.index0 }}" class="btn btn-primary">下载</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if challenge.attachments %}
+<div class="mb-5">
+  <h5 class="mb-3">附件</h5>
+  <div class="row row-cols-1 row-cols-md-3 row-cols-lg-5">
+    {% for attachment in challenge.attachments %}
+    <div class="col mb-3">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">附件 {{ loop.index }}</h5>
+          <p class="card-text">{{ attachment }}</p>
+          <a href="/challenge/{{ challenge.id }}/attachment/{{ loop.index0 }}" class="btn btn-primary">下载</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if not challenge.dynamic or artifact %}
+<div class="mb-5">
+  <h5>Flag 提交</h5>
+  <form method="post" action="/challenge/{{ challenge.id }}/solve">
+    <div class="input-group mb-3">
+      <span class="input-group-text">Flag</span>
+      <input type="text" name="flag" class="form-control" placeholder="Flag" required>
+    </div>
+    <button type="submit" class="btn btn-outline-primary mb-3">提交</button>
+  </form>
+</div>
+{% endif %}
+
+{% if challenge.dynamic %}
+<div>
+  <h5>操作</h5>
+  {% if artifact %}
+  <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rebuildModal">重新构建</button>
+  {% else %}
+  <a class="btn btn-outline-primary mb-3" href="/challenge/{{ challenge.id }}/build">构建</a>
+  {% endif %}
+  <small class="ms-1">注意：构建过程请求将会阻塞，请耐心等待。</small>
+</div>
+{% endif %}
+
+<div class="modal fade" id="rebuildModal" tabindex="-1" aria-labelledby="rebuildModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="rebuildModalLabel">重新构建</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>确定要重新构建吗？</p>
+        <p>如果进行重新构建，您的 Flag 将有可能发生改变。</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+        <a class="btn btn-danger" href="/challenge/{{ challenge.id }}/build">确定</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="/static/js/markdown.js" type="module"></script>
+<script>
+  const renderAt = Date.now();
+
+  const updateCountdown = () => {
+    const now = Date.now();
+    const countdowns = document.querySelectorAll('#countdown');
+
+    for (const countdown of countdowns) {
+      const past = (now - renderAt) / 1000;
+      const init = Number(countdown.getAttribute('countdown'));
+      const remained = Math.floor(Math.max(0, init - past));
+
+      countdown.innerText = remained;
+    }
+  }
+
+  window.addEventListener('load', () => {
+    setInterval(updateCountdown, 500);
+  });
+</script>
+{% endblock %}

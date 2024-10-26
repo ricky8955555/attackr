@@ -1,0 +1,7 @@
+{% macro show_progress(passed) %}
+{% if passed %}
+<span class="text-success">&check; 已通过</span>
+{% else %}
+<span class="text-secondary">&cross; 未通过</span>
+{% endif %}
+{% endmacro %}

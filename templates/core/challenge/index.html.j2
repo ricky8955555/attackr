@@ -1,0 +1,46 @@
+{% extends "core/base" %}
+
+{% block content %}
+{% for problemset, info in info | groupby("problemset") %}
+<div class="mb-5">
+  <h4 class="mb-3">
+    {% if problemset %}
+    {{ problemset.name }}
+    {% else %}
+    (未分类)
+    {% endif %}
+  </h4>
+  <p>
+    <span class="me-3">进度: {{ info | map(attribute="user_solved") | select | length }} / {{ info | length }}</span>
+    <span>得分: {{ info | map(attribute="points") | sumint }} / {{ info | map(attribute="challenge") |
+      map(attribute="points") | sumint }} pts</span>
+  </p>
+  <div class="row row-cols-1 row-cols-md-3 row-cols-lg-5">
+    {% for info in info %}
+    {% set challenge = info.challenge %}
+    {% set solved = info.solved %}
+    {% set user_solved = info.user_solved %}
+    <div class="col mb-3">
+      <div class="card h-100">
+        <div class="card-body{% if not challenge.public %} bg-secondary-subtle{% endif %}">
+          {% from "core/components/progress" import show_progress %}
+          <p class="card-text">{{ show_progress(user_solved is not none) }}</p>
+          <h5 class="card-title">{{ challenge.name }}</h5>
+          <h6 class="card-subtitle mb-3 text-body-secondary">
+            <span>{{ info.points }}</span>
+            <span>/</span>
+            <span>{{ challenge.points }}</span>
+            <span>pts</span>
+          </h6>
+          <a href="/challenge/{{ challenge.id }}" class="btn btn-primary mb-3">查看</a>
+        </div>
+        <div class="card-footer">
+          <p class="card-text text-body-secondary">已通过 {{ solved | length }} 人</p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

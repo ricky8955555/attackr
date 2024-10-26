@@ -1,0 +1,5 @@
+{% if flash and flash.message %}
+<div class="alert alert-{% if flash.kind == "error" %}danger{% else %}{{ flash.kind }}{% endif %}" role="alert">
+  {{ flash.message }}
+</div>
+{% endif %}

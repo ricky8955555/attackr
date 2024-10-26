@@ -1,0 +1,127 @@
+{% extends "core/base" %}
+
+{% block content %}
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item">
+    <a class="nav-link {% if current is none %}active{% endif %}" href="/scoreboard">所有</a>
+  </li>
+  {% for problemset in problemsets %}
+  <li class="nav-item">
+    <a class="nav-link {% if current == problemset.id %}active{% endif %}"
+      href="/scoreboard/?problemset={{ problemset.id }}">{{ problemset.name }}</a>
+  </li>
+  {% endfor %}
+</ul>
+
+<div class="d-flex justify-content-end">
+  <p>
+    {% from 'functions/time' import display as display_time %}
+    <small>榜单更新时间: {{ display_time(now) }}</small>
+  </p>
+</div>
+
+<div class="mb-3" style="height: 500px;">
+  <canvas id="scoreChart"></canvas>
+</div>
+
+<table class="table mb-5">
+  <thead>
+    <tr>
+      <th scope="col">排名</th>
+      <th scope="col">用户名</th>
+      {% for challenge in challenges %}
+      <th>{{ challenge.name }}</th>
+      {% endfor %}
+      <th>总得分</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for progress in progresses %}
+    {% set solved = progress.solved %}
+    {% set dataset = progress.dataset %}
+    {% set user = progress.user %}
+    <tr>
+      <th scope="row">{{ loop.index }}</th>
+      <td>
+        <a href="/user/{{ user.id }}" class="link-secondary link-offset-2 link-underline-opacity-0">
+          {{ user.username }}</a>
+        </th>
+        {% for solved in solved %}
+      </td>
+      <td>
+        {{ solved.points }}
+      </td>
+      {% endfor %}
+      <td>
+        {% if dataset %}
+        {{ dataset[-1][1] }}
+        {% else %}
+        0
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@^4"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@^2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@^1"></script>
+<script>
+  const zip = (a, b) => a.map((k, i) => [k, b[i]]);
+
+  const ctx = document.getElementById('scoreChart');
+
+  const start_at = {{ event.start_at | tojson }};
+  const end_at = {{ event.end_at | tojson }};
+
+  const now = {{ now | tojson }};
+
+  const users = {{ progresses | map(attribute = "user.username") | tojson }};
+  const all_points = {{ progresses | map(attribute = "dataset") | tojson }};
+
+  const datasets = [];
+
+  for (const [username, points] of zip(users, all_points)) {
+    points.unshift([start_at, 0]);
+    points.push([now, points.at(-1)[1]]);
+    console.log(points);
+
+    const data = points.map(point => { return { x: point[0], y: point[1] } });
+    datasets.push({ label: username, data: data, stepped: true });
+  }
+
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: datasets,
+      distribution: 'linear',
+    },
+    options: {
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'hour',
+          },
+          title: {
+            display: true,
+            text: '时间',
+          },
+          min: start_at,
+          max: end_at,
+        },
+        y: {
+          title: {
+            display: true,
+            text: '分数',
+          },
+        },
+      },
+      maintainAspectRatio: false,
+    }
+  });
+</script>
+{% endblock %}

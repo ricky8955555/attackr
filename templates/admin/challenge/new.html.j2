@@ -1,0 +1,87 @@
+{% extends "admin/base" %}
+
+{% block header %}
+<h1 class="mt-5 text-center">添加题目</h1>
+{% endblock %}
+
+{% block content %}
+<form method="post" enctype="multipart/form-data">
+  <div class="input-group mb-3">
+    <span class="input-group-text">名称</span>
+    <input type="text" name="name" class="form-control" placeholder="名称" required>
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">介绍</span>
+    <textarea name="description" class="form-control" rows="3" placeholder="介绍 (可置空)"></textarea>
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">分数</span>
+    <input type="number" name="points" class="form-control" placeholder="分数" required>
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">附属题集</span>
+    <select name="problemset" class="form-select">
+      <option value="" selected>
+        none
+      </option>
+      {% for problemset in problemsets %}
+      <option value="{{ problemset.id }}">
+        {{ problemset.id }} - {{ problemset.name }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="form-check mb-3">
+    <input class="form-check-input" type="checkbox" name="dynamic" id="dynamicCheckbox" value="true">
+    <label class="form-check-label">动态题目</label>
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">Flag</span>
+    <input type="text" name="flag" class="form-control" id="flagInput">
+  </div>
+  <small>源代码仅支持 Tarball Identity 档案</small>
+  <div class="input-group mb-3">
+    <span class="input-group-text">源代码</span>
+    <input class="form-control" id="sourceInput" type="file" name="source" accept=".tar">
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">附件</span>
+    <input class="form-control" id="attachmentInput" type="file" name="attachments[]" multiple>
+  </div>
+  <div class="form-check mb-3">
+    <input class="form-check-input" type="checkbox" name="public" value="true" checked>
+    <label class="form-check-label">公开</label>
+  </div>
+  <button type="submit" class="btn btn-outline-primary mb-3">添加</button>
+</form>
+{% endblock %}
+
+{% block script %}
+<script>
+  const form = document.querySelector('form');
+  const dynamicCheckbox = document.getElementById('dynamicCheckbox');
+  const flagInput = document.getElementById('flagInput');
+  const sourceInput = document.getElementById('sourceInput');
+  const attachmentInput = document.getElementById('attachmentInput');
+
+  form.onsubmit = () => {
+    sourceInput.disabled = sourceInput.files.length == 0;
+    attachmentInput.disabled = attachmentInput.files.length == 0;
+  }
+
+  const dynamicUpdated = () => {
+    if (dynamicCheckbox.checked) {
+      flagInput.placeholder = '请输入动态 Flag 格式 (默认值 {% raw %}flag{{{}}}{% endraw %})';
+      sourceInput.required = true;
+      flagInput.required = false;
+    } else {
+      flagInput.placeholder = '请输入 Flag';
+      sourceInput.required = false;
+      flagInput.required = true;
+    }
+  }
+
+  dynamicCheckbox.onchange = dynamicUpdated;
+  window.addEventListener('load', dynamicUpdated);
+</script>
+{% endblock %}

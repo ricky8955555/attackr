@@ -1,0 +1,64 @@
+{% extends "admin/base" %}
+
+{% block header %}
+<h1 class="mt-5 text-center">修改题目信息</h1>
+{% endblock %}
+
+{% block content %}
+<form method="post">
+  <div class="input-group mb-3">
+    <span class="input-group-text">名称</span>
+    <input type="text" name="name" class="form-control" placeholder="名称 (置空不修改)" value="{{ challenge.name }}" required>
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">介绍</span>
+    <textarea name="description" class="form-control" rows="3"
+      placeholder="介绍 (置空将清空)">{{ challenge.description }}</textarea>
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">分数</span>
+    <input type="number" name="points" class="form-control" placeholder="分数" value="{{ challenge.initial }}" required>
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">附属题集</span>
+    <select name="problemset" class="form-select">
+      <option value="" {% if challenge.problemset %}selected{% endif %}>
+        none
+      </option>
+      {% for problemset in problemsets %}
+      <option value="{{ problemset.id }}" {% if problemset.id==challenge.problemset %}selected{% endif %}>
+        {{ problemset.id }} - {{ problemset.name }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="form-check mb-3">
+    <input class="form-check-input" type="checkbox" name="public" value="true" {% if challenge.public %}checked {%
+      endif %}>
+    <label class="form-check-label">公开</label>
+  </div>
+  <button type="submit" class="btn btn-outline-primary">修改</button>
+  <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">删除</button>
+</form>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="deleteModalLabel">删除题目</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        确定删除吗？删除题目将会删除所有相关的数据（包括用户解题记录、题目源代码等）。
+      </div>
+      <div class="modal-footer">
+        <form method="post">
+          <input type="hidden" name="_method" value="delete">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="submit" class="btn btn-danger">删除</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

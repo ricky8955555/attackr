@@ -1,0 +1,92 @@
+{% extends "admin/base" %}
+
+{% block stylesheet %}
+<link rel="stylesheet" href="/static/css/markdown.css">
+{% endblock %}
+
+{% block header %}
+<h1 class="mt-5 text-center">查看题目详情</h1>
+{% endblock %}
+
+{% block content %}
+<h4 class="mb-3">题目信息</h4>
+<ul class="list-group text-start text-break mb-5">
+  <li class="list-group-item">ID: {{ challenge.id }}</li>
+  <li class="list-group-item">名称: {{ challenge.name }}</li>
+  <li class="list-group-item">
+    <p>介绍:</p>
+    <div class="md-block">
+      <p style="white-space: pre-line">{{ challenge.description }}</p>
+    </div>
+  </li>
+  <li class="list-group-item">
+    <span>类型:</span>
+    <span>
+      {% if challenge.dynamic %}
+      动态
+      {% else %}
+      静态
+      {% endif %}
+    </span>
+  </li>
+  <li class="list-group-item">分数: {{ challenge.points }} / {{ challenge.initial }}</li>
+</ul>
+
+<div class="row mb-4 mb-3">
+  <div class="col-lg-3">
+    <ul class="list-group text-start text-break mb-3">
+      <li class="list-group-item list-group-item-primary">信息</li>
+      <li class="list-group-item">路径: {{ challenge.path }}</li>
+      {% if challenge.dynamic %}
+      <li class="list-group-item">Flag 类型: 动态</li>
+      <li class="list-group-item">Flag 格式: {{ challenge.flag }}</li>
+      {% else %}
+      <li class="list-group-item">Flag 类型: 静态</li>
+      <li class="list-group-item">Flag: {{ challenge.flag }}</li>
+      {% endif %}
+      </li>
+    </ul>
+  </div>
+  <div class="col-lg-3">
+    {% for attachment in challenge.attachments %}
+    <ul class="list-group text-start text-break mb-3">
+      <li class="list-group-item list-group-item-success">附件 {{ loop.index }}</li>
+      <li class="list-group-item">文件名: {{ attachment }}</li>
+    </ul>
+    {% endfor %}
+  </div>
+  {% if build %}
+  <div class="col-lg-3">
+    {% for build in build.steps %}
+    <ul class="list-group text-start text-break mb-3">
+      <li class="list-group-item list-group-item-secondary">构建 {{ loop.index }}</li>
+      <li class="list-group-item">构建类型: {{ build.type }}</li>
+      {% if build.type == "Cmd" %}
+      <li class="list-group-item">命令: {{ build.cmds }}</li>
+      <li class="list-group-item">环境变量: {{ build.envs }}</li>
+      {% elif build.type == "Docker" %}
+      <li class="list-group-item">构建目录: {{ build.path }}</li>
+      <li class="list-group-item">配置: {{ build.config }}</li>
+      {% endif %}
+    </ul>
+    {% endfor %}
+  </div>
+  <div class="col-lg-3">
+    {% for artifact in build.artifacts %}
+    <ul class="list-group text-start text-break mb-3">
+      <li class="list-group-item list-group-item-info">产物 {{ loop.index }}</li>
+      <li class="list-group-item">产物类型: {{ artifact.type }}</li>
+      {% if artifact.type == "Binary" %}
+      <li class="list-group-item">名称: {{ artifact.name }}</li>
+      <li class="list-group-item">路径: {{ artifact.path }}</li>
+      {% endif %}
+    </ul>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="/static/js/markdown.js" type="module"></script>
+{% endblock %}

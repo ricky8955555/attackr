@@ -74,3 +74,14 @@ where
         self.map_err(|err| Error::redirect(uri, &format!("{msg}: {err}")))
     }
 }
+
+pub trait OptionFlashExt<T> {
+    #[allow(dead_code)]
+    fn flash_expect<U: TryInto<Reference<'static>>>(self, uri: U, msg: &str) -> Result<T>;
+}
+
+impl<T> OptionFlashExt<T> for Option<T> {
+    fn flash_expect<U: TryInto<Reference<'static>>>(self, uri: U, msg: &str) -> Result<T> {
+        self.ok_or_else(|| Error::redirect(uri, msg))
+    }
+}

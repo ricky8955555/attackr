@@ -24,7 +24,7 @@ use crate::{
     pages::{auth_session, Error, Result, ResultFlashExt},
 };
 
-use super::{check_permission, ResultResponseExt};
+use super::{check_permission, OptionResponseExt, ResultResponseExt};
 
 #[allow(clippy::declare_interior_mutable_const)]
 pub const ROOT: Origin<'static> = uri!("/admin/submission");
@@ -46,11 +46,21 @@ async fn index(
         .map(|user| (user.id.unwrap(), user))
         .collect();
 
+    let user_entry = match &user {
+        Some(id) => Some(users.get(id).resp_expect("用户不存在")?),
+        None => None,
+    };
+
     let challenge_list = list_challenges(&db).await.resp_expect("获取题目列表失败")?;
     let challenges: HashMap<_, _> = challenge_list
         .iter()
         .map(|challenge| (challenge.id.unwrap(), challenge))
         .collect();
+
+    let challenge_entry = match &challenge {
+        Some(id) => Some(challenges.get(id).resp_expect("题目不存在")?),
+        None => None,
+    };
 
     let submissions: Vec<_> = match (user, challenge) {
         (None, None) => list_submissions(&db).await,
@@ -77,12 +87,16 @@ async fn index(
     })
     .collect();
 
-    let user = user.map(|id| users.get(&id).expect("foreign key"));
-    let challenge = challenge.map(|id| challenges.get(&id).expect("foreign key"));
-
     Ok(Template::render(
         "admin/submission/index",
-        context! {flash, submissions, user, challenge, users: &user_list, challenges: &challenge_list},
+        context! {
+            flash,
+            submissions,
+            user: user_entry,
+            challenge: challenge_entry,
+            users: &user_list,
+            challenges: &challenge_list,
+        },
     ))
 }
 

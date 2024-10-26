@@ -48,6 +48,17 @@ where
     }
 }
 
+pub trait OptionResponseExt<T> {
+    #[allow(dead_code)]
+    fn resp_expect(self, msg: &str) -> Result<T>;
+}
+
+impl<T> OptionResponseExt<T> for Option<T> {
+    fn resp_expect(self, msg: &str) -> Result<T> {
+        self.ok_or_else(|| Error::Page(show_error(msg)))
+    }
+}
+
 pub fn stage() -> AdHoc {
     AdHoc::on_ignite("Core Pages", |rocket| async {
         rocket

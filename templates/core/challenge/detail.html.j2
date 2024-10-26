@@ -35,7 +35,7 @@
 {% if artifact %}
 <div class="mb-5">
   <h5 class="mb-3">产物</h5>
-  <div class="row row-cols-1 row-cols-lg-3">
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4">
     {% for artifact in artifact.info %}
     <div class="col mb-3">
       <div class="card">
@@ -50,8 +50,11 @@
           {% endif %}
           {% if docker.ports %}
           <p class="card-text mb-0">端口映射:</p>
-          {% for exposed, addr in docker.ports %}
-          <p class="card-text mb-0">&nbsp;&bull; {{ exposed }} &rightarrowtail; {{ addr | join(", ") }}</p>
+          {% for exposed, addrs in docker.ports %}
+          <p class="card-text mb-0">&nbsp;&bull; {{ exposed }} &rightarrowtail;</p>
+          {% for addr in addrs %}
+          <p class="mb-0 ms-5">{{ addr }}</p>
+          {% endfor %}
           {% endfor %}
           <br>
           {% endif %}

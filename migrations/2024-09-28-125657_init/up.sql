@@ -34,7 +34,7 @@ CREATE TABLE "challenges" (
 );
 
 CREATE TABLE "artifacts" (
-	"id"	INTEGER NOT NULL,
+	"id"	INTEGER,
 	"user"	INTEGER,
 	"challenge"	INTEGER NOT NULL,
 	"flag"	TEXT NOT NULL,

@@ -540,16 +540,20 @@ pub async fn docker_expiry(user: i32, challenge: i32, artifact: usize) -> Result
 }
 
 fn mapped_addr(addr: &MappedAddr, port: u16) -> SocketAddr {
-    let port = addr.ports.as_ref().map(|mapped| {
-        let ports = CONFIG
-            .docker
-            .options
-            .ports
-            .as_ref()
-            .expect("'ports' should be set here.");
+    let port = addr
+        .ports
+        .as_ref()
+        .map(|mapped| {
+            let ports = CONFIG
+                .docker
+                .options
+                .ports
+                .as_ref()
+                .expect("'ports' should be set here.");
 
-        port - ports.start() + mapped.start()
-    }).unwrap_or(port);
+            port - ports.start() + mapped.start()
+        })
+        .unwrap_or(port);
 
     SocketAddr::new(addr.addr, port)
 }

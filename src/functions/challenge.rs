@@ -23,7 +23,10 @@ use crate::{
     db::{
         models::{Artifact as ArtifactEntry, Challenge, Solved, Submission},
         query::{
-            artifact::{delete_artifact, get_artifact, list_challenge_artifacts, update_artifact},
+            artifact::{
+                delete_artifact, delete_dynamic_artifact, get_artifact, list_challenge_artifacts,
+                update_artifact,
+            },
             challenge::{delete_challenge, get_challenge, list_challenges, update_challenge},
             solved::{
                 add_solved, count_challenge_effective_solved, list_challenge_effective_solved,
@@ -358,6 +361,7 @@ pub async fn build_challenge(db: &Db, user: Option<i32>, challenge: i32) -> Resu
 
         if let Ok(artifact) = get_artifact(db, challenge, user).await {
             _ = clear_artifact(&artifact).await;
+            _ = delete_artifact(db, challenge, user).await;
         }
 
         let name = uuid::Uuid::new_v4().hyphenated().to_string();
@@ -669,7 +673,7 @@ pub async fn solve_challenge(db: &Db, user: i32, challenge: i32, flag: &str) -> 
     if let Some(artifact) = artifact {
         if CONFIG.clear_on_solved && dynamic {
             _ = clear_artifact(&artifact).await;
-            _ = delete_artifact(db, user, challenge).await;
+            _ = delete_dynamic_artifact(db, user, challenge).await;
         }
     }
 

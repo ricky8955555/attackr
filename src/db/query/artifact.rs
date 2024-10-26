@@ -53,7 +53,7 @@ pub async fn get_artifact(db: &Db, challenge: i32, user: Option<i32>) -> QueryRe
     }
 }
 
-pub async fn delete_artifact(db: &Db, user: i32, challenge: i32) -> QueryResult<()> {
+pub async fn delete_dynamic_artifact(db: &Db, challenge: i32, user: i32) -> QueryResult<()> {
     db.run(move |conn| {
         diesel::delete(artifacts::table)
             .filter(
@@ -66,6 +66,29 @@ pub async fn delete_artifact(db: &Db, user: i32, challenge: i32) -> QueryResult<
     .await?;
 
     Ok(())
+}
+
+pub async fn delete_static_artifact(db: &Db, challenge: i32) -> QueryResult<()> {
+    db.run(move |conn| {
+        diesel::delete(artifacts::table)
+            .filter(
+                artifacts::user
+                    .is_null()
+                    .and(artifacts::challenge.eq(challenge)),
+            )
+            .execute(conn)
+    })
+    .await?;
+
+    Ok(())
+}
+
+pub async fn delete_artifact(db: &Db, challenge: i32, user: Option<i32>) -> QueryResult<()> {
+    if let Some(user) = user {
+        delete_dynamic_artifact(db, challenge, user).await
+    } else {
+        delete_static_artifact(db, challenge).await
+    }
 }
 
 pub async fn list_user_artifacts(db: &Db, id: i32) -> QueryResult<Vec<Artifact>> {

@@ -82,12 +82,14 @@ async fn docker_instance_check() {
         let now = Instant::now();
         let mut expired = Vec::new();
 
-        let instances = DOCKER_INSTANCES.read().await;
+        {
+            let instances = DOCKER_INSTANCES.read().await;
 
-        for (key, instance) in instances.iter() {
-            if let Some(stop_at) = instance.stop_at {
-                if now >= stop_at {
-                    expired.push(*key);
+            for (key, instance) in instances.iter() {
+                if let Some(stop_at) = instance.stop_at {
+                    if now >= stop_at {
+                        expired.push(*key);
+                    }
                 }
             }
         }

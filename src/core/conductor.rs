@@ -503,7 +503,7 @@ where
 
         let mut artifacts = Vec::new();
 
-        for step in build.steps.iter() {
+        for step in &build.steps {
             match step {
                 Step::Cmd(step) => execute_cmd_step(&tempdir, flag, step).await?,
                 Step::Docker(step) => artifacts.push(Artifact::Docker(
@@ -512,7 +512,7 @@ where
             };
         }
 
-        for artifact in build.artifacts.iter() {
+        for artifact in &build.artifacts {
             #[allow(clippy::single_match)]
             match artifact {
                 ArtifactInfo::Binary(artifact) => artifacts.push(Artifact::Binary(

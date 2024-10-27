@@ -1,5 +1,15 @@
 {% extends "core/base" %}
 
+{% block stylesheet %}
+<style>
+  .sticky-table th:first-child,
+  .sticky-table td:first-child {
+    position: sticky;
+    left: 0;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <ul class="nav nav-tabs mb-3">
   <li class="nav-item">
@@ -25,11 +35,11 @@
 </div>
 
 <div class="mb-5 table-responsive">
-  <table class="table">
+  <table class="sticky-table table" style="word-break: keep-all;">
     <thead>
       <tr>
-        <th scope="col">排名</th>
         <th scope="col">用户名</th>
+        <th scope="col">排名</th>
         {% for challenge in challenges %}
         <th>{{ challenge.name }}</th>
         {% endfor %}
@@ -42,13 +52,12 @@
       {% set dataset = progress.dataset %}
       {% set user = progress.user %}
       <tr>
-        <th scope="row">{{ loop.index }}</th>
-        <td>
+        <th scope="row">
           <a href="/user/{{ user.id }}" class="link-secondary link-offset-2 link-underline-opacity-0">
             {{ user.username }}</a>
-          </th>
-          {% for solved in solved %}
-        </td>
+        </th>
+        <td>{{ loop.index }}</td>
+        {% for solved in solved %}
         <td>
           {{ solved.points }}
         </td>

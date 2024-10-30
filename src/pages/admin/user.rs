@@ -25,7 +25,6 @@ pub const ROOT: Origin<'static> = uri!("/admin/user");
 
 #[derive(Debug, Clone, FromForm)]
 struct UserInfo<'r> {
-    pub username: &'r str,
     pub password: &'r str,
     pub contact: &'r str,
     pub email: &'r str,
@@ -108,10 +107,7 @@ async fn edit(
 
     let new_user = User {
         id: Some(id),
-        username: Some(info.username)
-            .filter(|s| !s.is_empty())
-            .unwrap_or(&user.username)
-            .to_string(),
+        username: user.username,
         password: Some(info.password)
             .filter(|s| !s.is_empty())
             .map(hash_password)

@@ -52,6 +52,13 @@ struct Register<'r> {
     pub contact: &'r str,
 }
 
+#[derive(Debug, Clone, FromForm)]
+struct Edit<'r> {
+    pub password: &'r str,
+    pub email: &'r str,
+    pub contact: &'r str,
+}
+
 #[get("/")]
 async fn index(jar: &CookieJar<'_>, db: Db) -> Result<Redirect> {
     let user = auth_session(&db, jar).await?;
@@ -134,15 +141,12 @@ async fn edit_page(
 }
 
 #[post("/edit", data = "<info>")]
-async fn edit(jar: &CookieJar<'_>, db: Db, info: Form<Register<'_>>) -> Result<Flash<Redirect>> {
+async fn edit(jar: &CookieJar<'_>, db: Db, info: Form<Edit<'_>>) -> Result<Flash<Redirect>> {
     let user = auth_session(&db, jar).await?;
 
     let new_user = User {
         id: Some(user.id.unwrap()),
-        username: Some(info.username)
-            .filter(|s| !s.is_empty())
-            .unwrap_or(&user.username)
-            .to_string(),
+        username: user.username,
         password: Some(info.password)
             .filter(|s| !s.is_empty())
             .map(hash_password)

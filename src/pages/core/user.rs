@@ -121,7 +121,12 @@ async fn view(
         })
         .collect();
 
-    let email = format!("{:x}", Sha256::new().chain_update(&user.email).finalize());
+    let email = format!(
+        "{:x}",
+        Sha256::new()
+            .chain_update(&user.email.to_ascii_lowercase())
+            .finalize()
+    );
 
     Ok(Template::render(
         "core/user/index",

@@ -11,6 +11,8 @@
 {% endblock %}
 
 {% block content %}
+{% from 'functions/points' import display as display_points %}
+
 <ul class="nav nav-tabs mb-3">
   <li class="nav-item">
     <a class="nav-link {% if current is none %}active{% endif %}" href="/scoreboard">所有</a>
@@ -58,13 +60,11 @@
         </th>
         <td>{{ loop.index }}</td>
         {% for solved in solved %}
-        <td>
-          {{ solved.points }}
-        </td>
+        <td>{{ display_points(solved.points) }} </td>
         {% endfor %}
         <td>
           {% if dataset %}
-          {{ dataset[-1][1] }}
+          {{ display_points(dataset[-1][1]) }}
           {% else %}
           0
           {% endif %}

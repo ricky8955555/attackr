@@ -29,7 +29,8 @@
       {% endif %}
     </span>
   </li>
-  <li class="list-group-item">分数: {{ challenge.points }} / {{ challenge.initial }}</li>
+  {% from 'functions/points' import display as display_points %}
+  <li class="list-group-item">分数: {{ display_points(challenge.points) }} / {{ challenge.initial }}</li>
 </ul>
 
 <div class="row mb-4 mb-3">

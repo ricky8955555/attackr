@@ -1,6 +1,8 @@
 {% extends "core/base" %}
 
 {% block content %}
+{% from 'functions/points' import display as display_points %}
+
 {% for problemset, info in info | groupby("problemset") %}
 <div class="mb-5">
   <h4 class="mb-3">
@@ -12,8 +14,9 @@
   </h4>
   <p>
     <span class="me-3">进度: {{ info | map(attribute="user_solved") | select | length }} / {{ info | length }}</span>
-    <span>得分: {{ info | map(attribute="points") | sumint }} / {{ info | map(attribute="challenge") |
-      map(attribute="points") | sumint }} pts</span>
+    <span>
+      得分: {{ display_points(info | map(attribute="points") | sumint) }} / {{ display_points(info |
+      map(attribute="challenge") | map(attribute="points") | sumint) }} pts</span>
   </p>
   <div class="row row-cols-1 row-cols-md-3 row-cols-lg-5">
     {% for info in info %}
@@ -27,9 +30,9 @@
           <p class="card-text">{{ show_progress(user_solved is not none) }}</p>
           <h5 class="card-title">{{ challenge.name }}</h5>
           <h6 class="card-subtitle mb-3 text-body-secondary">
-            <span>{{ info.points }}</span>
+            <span>{{ display_points(info.points) }}</span>
             <span>/</span>
-            <span>{{ challenge.points }}</span>
+            <span>{{ display_points(challenge.points) }}</span>
             <span>pts</span>
           </h6>
           <a href="/challenge/{{ challenge.id }}" class="btn btn-primary mb-3">查看</a>

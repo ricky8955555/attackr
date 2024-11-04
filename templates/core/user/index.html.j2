@@ -1,12 +1,15 @@
 {% extends "core/base" %}
 
 {% block content %}
+{% from 'functions/points' import display as display_points %}
+
 <div class="row">
   <div class="col-lg-3 mb-3">
     <ul class="list-group text-start">
       {% if is_self %}
       <li class="list-group-item">
-        <a class="text-decoration-none" href="/user/edit"><img src="/static/icons/pen-to-square-regular.svg" height="20"></a>
+        <a class="text-decoration-none" href="/user/edit"><img src="/static/icons/pen-to-square-regular.svg"
+            height="20"></a>
       </li>
       {% endif %}
       <li class="list-group-item">
@@ -56,10 +59,10 @@
           </td>
           <td>
             <span>
-              {{ info.points }}
+              {{ display_points(info.points) }}
             </span>
             <span>/</span>
-            <span>{{ challenge.points }}</span>
+            <span>{{ display_points(challenge.points) }}</span>
           </td>
           <td>
             {% if solved %}
@@ -96,7 +99,7 @@
           <td>
             {% set got = progress | map(attribute="points") | sumint %}
             {% set total = progress | map(attribute="challenge") | map(attribute="points") | sumint %}
-            {{ got }} / {{ total }} ({{ (got / total * 100) | round(2) }} %)
+            {{ display_points(got) }} / {{ display_points(total) }} ({{ (got / total * 100) | round(2) }} %)
           </td>
         </tr>
         {% endfor %}
@@ -104,9 +107,9 @@
     </table>
     <p>
       <span>总得分:</span>
-      <span>{{ progress | map(attribute="points") | sumint }}</span>
+      <span>{{ display_points(progress | map(attribute="points") | sumint) }}</span>
       <span>/</span>
-      <span>{{ progress | map(attribute="challenge") | map(attribute="points") | sumint }}</span>
+      <span>{{ display_points(progress | map(attribute="challenge") | map(attribute="points") | sumint) }}</span>
       <span>pts</span>
     </p>
   </div>

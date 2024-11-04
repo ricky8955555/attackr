@@ -47,7 +47,10 @@
         {% endif %}
       </td>
       <td>{{ challenge.initial }}</td>
-      <td>{{ challenge.points }}</td>
+      <td>
+        {% from 'functions/points' import display as display_points %}
+        {{ display_points(challenge.points) }}
+      </td>
       <td>{{ challenge.public }}</td>
       <td>
         <a title="详情" href="/admin/challenge/{{ challenge.id }}/detail" class="text-decoration-none me-2">

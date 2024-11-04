@@ -124,7 +124,7 @@ async fn view(
     let email = format!(
         "{:x}",
         Sha256::new()
-            .chain_update(&user.email.to_ascii_lowercase())
+            .chain_update(user.email.to_ascii_lowercase())
             .finalize()
     );
 

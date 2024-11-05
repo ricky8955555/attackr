@@ -20,7 +20,7 @@ export const renderName = (element, colors = null) => {
   for (const tag of tags) {
     const cur = document.createElement('span');
 
-    const color = calcTagColor(tag, colors);
+    const color = calcTagColor(tag.trim(), colors);
     cur.style.color = color;
     cur.innerText = `#${tag}`;
 

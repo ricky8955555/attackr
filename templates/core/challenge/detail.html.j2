@@ -142,9 +142,13 @@
 {% endblock %}
 
 {% block script %}
-<script src="/static/js/markdown.js" type="module"></script>
-<script>
+<script type="module">
+  import { renderMarkdown } from '/static/js/markdown.js';
+
   const renderAt = Date.now();
+
+  const description = document.getElementById('description');
+  renderMarkdown(description);
 
   const updateCountdown = () => {
     const now = Date.now();

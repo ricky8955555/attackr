@@ -15,7 +15,7 @@
   <li class="list-group-item">名称: {{ challenge.name }}</li>
   <li class="list-group-item">
     <p>介绍:</p>
-    <div class="md-block">
+    <div class="md-block" id="description">
       <p style="white-space: pre-line">{{ challenge.description }}</p>
     </div>
   </li>
@@ -89,5 +89,10 @@
 {% endblock %}
 
 {% block script %}
-<script src="/static/js/markdown.js" type="module"></script>
+<script type="module">
+  import { renderMarkdown } from '/static/js/markdown.js';
+
+  const description = document.getElementById('description');
+  renderMarkdown(description);
+</script>
 {% endblock %}

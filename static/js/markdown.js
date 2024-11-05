@@ -1,4 +1,4 @@
-import { marked } from 'https://cdn.jsdelivr.net/npm/marked/+esm';
+import { marked } from 'https://cdn.jsdelivr.net/npm/marked/+esm'
 import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3/+esm'
 
 export const renderMarkdown = element => {

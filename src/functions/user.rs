@@ -178,6 +178,7 @@ pub async fn initialize_superuser(rocket: Rocket<Build>) -> Rocket<Build> {
             email: "admin@example.com".to_string(),
             enabled: true,
             role: UserRole::Superuser,
+            nickname: None,
         };
 
         add_user(&db, user).await.expect("failed to add superuser.");

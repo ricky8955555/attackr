@@ -36,15 +36,15 @@
 </div>
 
 <div class="table-responsive">
-  <table class="sticky-table table" style="word-break: keep-all;">
+  <table class="sticky-table table" style="white-space: nowrap;">
     <thead>
       <tr>
-        <th scope="col">用户名</th>
         <th scope="col">排名</th>
+        <th scope="col">用户</th>
         {% for challenge in challenges %}
-        <th>{{ challenge.name }}</th>
+        <th scope="col">{{ challenge.name }}</th>
         {% endfor %}
-        <th>总得分</th>
+        <th scope="col">总得分</th>
       </tr>
     </thead>
     <tbody>
@@ -53,11 +53,12 @@
       {% set dataset = progress.dataset %}
       {% set user = progress.user %}
       <tr>
-        <th scope="row">
-          <a href="/user/{{ user.id }}" class="link-secondary link-offset-2 link-underline-opacity-0">
-            {{ user.username }}</a>
+        <th scope="row">{{ loop.index }}</th>
+        <th>
+          <a href="/user/{{ user.id }}" class="link-secondary link-offset-2 link-underline-opacity-0 fw-semibold"
+            style="font-size: .95rem;" id="name">
+            {{ user.nickname or user.username }}</a>
         </th>
-        <td>{{ loop.index }}</td>
         {% for solved in solved %}
         <td>{{ display_points(solved.points) }} </td>
         {% endfor %}
@@ -77,7 +78,15 @@
 
 {% block script %}
 <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
-<script>
+<script type="module">
+  import { renderName } from '/static/js/name-renderer.js'
+
+  const names = document.querySelectorAll('#name');
+
+  for (const name of names) {
+    renderName(name);
+  }
+
   const zip = (a, b) => a.map((k, i) => [k, b[i]]);
 
   const container = document.getElementById('scoreChart');

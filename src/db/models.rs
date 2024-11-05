@@ -3,7 +3,7 @@ use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use strum::EnumIter;
 use time::PrimitiveDateTime;
-use validator::Validate;
+use validator::{Validate, ValidationError};
 
 use crate::core::conductor::Artifact as ArtifactInfo;
 
@@ -36,6 +36,16 @@ impl Default for UserRole {
     }
 }
 
+fn validate_username(username: &str) -> Result<(), ValidationError> {
+    if !username.is_ascii() || username.contains(' ') {
+        return Err(ValidationError::new(
+            "username should not contains non-ascii characters or spaces.",
+        ));
+    }
+
+    Ok(())
+}
+
 #[derive(
     Debug,
     Clone,
@@ -50,9 +60,10 @@ impl Default for UserRole {
 )]
 #[serde(crate = "rocket::serde")]
 #[diesel(table_name = users)]
+#[diesel(treat_none_as_null = true)]
 pub struct User {
     pub id: Option<i32>,
-    #[validate(length(min = 1))]
+    #[validate(length(min = 1), custom(function = "validate_username"))]
     pub username: String,
     #[serde(skip_serializing)]
     pub password: String,
@@ -62,6 +73,7 @@ pub struct User {
     pub email: String,
     pub enabled: bool,
     pub role: UserRole,
+    pub nickname: Option<String>,
 }
 
 #[derive(

@@ -30,6 +30,7 @@ struct UserInfo<'r> {
     pub email: &'r str,
     pub enabled: bool,
     pub role: UserRole,
+    pub nickname: &'r str,
 }
 
 #[get("/")]
@@ -123,6 +124,9 @@ async fn edit(
             .to_string(),
         enabled: info.enabled,
         role: info.role,
+        nickname: Some(info.nickname)
+            .filter(|s| !s.is_empty())
+            .map(|s| s.to_string()),
     };
 
     update_user(&db, new_user)

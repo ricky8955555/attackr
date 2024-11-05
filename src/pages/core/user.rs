@@ -50,6 +50,7 @@ struct Register<'r> {
     pub password: &'r str,
     pub email: &'r str,
     pub contact: &'r str,
+    pub nickname: &'r str,
 }
 
 #[derive(Debug, Clone, FromForm)]
@@ -57,6 +58,7 @@ struct Edit<'r> {
     pub password: &'r str,
     pub email: &'r str,
     pub contact: &'r str,
+    pub nickname: &'r str,
 }
 
 #[get("/")]
@@ -165,6 +167,9 @@ async fn edit(jar: &CookieJar<'_>, db: Db, info: Form<Edit<'_>>) -> Result<Flash
             .to_string(),
         enabled: user.enabled,
         role: user.role,
+        nickname: Some(info.nickname)
+            .filter(|s| !s.is_empty())
+            .map(|s| s.to_string()),
     };
 
     update_user(&db, new_user)
@@ -235,6 +240,9 @@ async fn register(db: Db, info: Form<Register<'_>>) -> Result<Flash<Redirect>> {
         email: info.email.to_string(),
         enabled,
         role: UserRole::Challenger,
+        nickname: Some(info.nickname)
+            .filter(|s| !s.is_empty())
+            .map(|s| s.to_string()),
     };
 
     add_user(&db, user)

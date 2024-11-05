@@ -54,6 +54,7 @@ diesel::table! {
         email -> Text,
         enabled -> Bool,
         role -> UserRoleMapping,
+        nickname -> Nullable<Text>,
     }
 }
 

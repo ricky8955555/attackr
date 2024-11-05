@@ -8,7 +8,13 @@
 <form method="post">
   <div class="input-group mb-3">
     <span class="input-group-text">用户名</span>
-    <input type="text" name="username" class="form-control" placeholder="用户名 (置空不修改)" value="{{ user.username }}" disabled>
+    <input type="text" name="username" class="form-control" placeholder="用户名 (置空不修改)" value="{{ user.username }}"
+      disabled>
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">昵称</span>
+    <input type="text" name="nickname" class="form-control" placeholder="昵称 (置空将清除)"
+      value="{% if user.nickname %}{{ user.nickname }}{% endif %}">
   </div>
   <div class="input-group mb-3">
     <span class="input-group-text">密码</span>
@@ -16,11 +22,11 @@
   </div>
   <div class="input-group mb-3">
     <span class="input-group-text">联系方式</span>
-    <input type="text" name="contact" class="form-control" placeholder="联系方式 (置空不修改)" value="{{user.contact}}">
+    <input type="text" name="contact" class="form-control" placeholder="联系方式 (置空不修改)" value="{{ user.contact }}">
   </div>
   <div class="input-group mb-3">
     <span class="input-group-text">Email</span>
-    <input type="email" name="email" class="form-control" placeholder="Email (置空不修改)" value="{{user.email}}">
+    <input type="email" name="email" class="form-control" placeholder="Email (置空不修改)" value="{{ user.email }}">
   </div>
   <button type="submit" class="btn btn-outline-primary mb-3">修改</button>
 </form>

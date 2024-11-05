@@ -63,7 +63,7 @@ fn validate_username(username: &str) -> Result<(), ValidationError> {
 #[diesel(treat_none_as_null = true)]
 pub struct User {
     pub id: Option<i32>,
-    #[validate(length(min = 1), custom(function = "validate_username"))]
+    #[validate(length(min = 1, max = 25), custom(function = "validate_username"))]
     pub username: String,
     #[serde(skip_serializing)]
     pub password: String,
@@ -73,6 +73,7 @@ pub struct User {
     pub email: String,
     pub enabled: bool,
     pub role: UserRole,
+    #[validate(length(min = 1, max = 60))]
     pub nickname: Option<String>,
 }
 

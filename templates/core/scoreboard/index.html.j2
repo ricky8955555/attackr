@@ -32,11 +32,10 @@
   </p>
 </div>
 
-<div class="mb-3" style="height: 500px;">
-  <canvas id="scoreChart"></canvas>
+<div class="mb-5 w-100" style="height: 500px;" id="scoreChart">
 </div>
 
-<div class="mb-5 table-responsive">
+<div class="table-responsive">
   <table class="sticky-table table" style="word-break: keep-all;">
     <thead>
       <tr>
@@ -77,13 +76,12 @@
 {% endblock %}
 
 {% block script %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@^4"></script>
-<script src="https://cdn.jsdelivr.net/npm/moment@^2"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@^1"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 <script>
   const zip = (a, b) => a.map((k, i) => [k, b[i]]);
 
-  const ctx = document.getElementById('scoreChart');
+  const container = document.getElementById('scoreChart');
+  const chart = echarts.init(container);
 
   const start_at = {{ event.start_at | tojson }};
   const end_at = {{ event.end_at | tojson }};
@@ -93,49 +91,37 @@
   const users = {{ progresses | map(attribute = "user.username") | tojson }};
   const all_points = {{ progresses | map(attribute = "dataset") | tojson }};
 
-  const datasets = [];
+  const series = [];
 
   for (const [username, points] of zip(users, all_points)) {
     points.unshift([start_at, 0]);
     points.push([now, points.at(-1)[1]]);
-
-    const data = points.map(point => { return { x: point[0], y: point[1] } });
-    datasets.push({ label: username, data: data, stepped: true });
+    series.push({ name: username, type: 'line', step: 'end', data: points });
   }
 
-  const chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      datasets: datasets,
-      distribution: 'linear',
+  const option = {
+    legend: {},
+    tooltip: {
+      trigger: 'axis',
     },
-    options: {
-      scales: {
-        x: {
-          type: 'time',
-          time: {
-            unit: 'hour',
-          },
-          title: {
-            display: true,
-            text: '时间',
-          },
-          grid: {
-            display: false,
-          },
-          min: start_at,
-          max: end_at,
-        },
-        y: {
-          title: {
-            display: true,
-            text: '分数',
-          },
-          min: 0,
-        },
+    dataZoom: [
+      {
+        type: 'slider',
+        show: true,
+        filterMode: 'none',
       },
-      maintainAspectRatio: false,
-    }
-  });
+    ],
+    xAxis: {
+      type: 'time',
+      min: start_at,
+      max: end_at,
+    },
+    yAxis: {},
+    series: series,
+  };
+
+  chart.setOption(option);
+
+  new ResizeObserver(() => chart.resize()).observe(container);
 </script>
 {% endblock %}

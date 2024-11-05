@@ -12,13 +12,13 @@
       disabled>
   </div>
   <div class="input-group mb-3">
+    <span class="input-group-text">密码</span>
+    <input type="password" name="password" class="form-control" placeholder="密码 (置空不修改)">
+  </div>
+  <div class="input-group mb-3">
     <span class="input-group-text">昵称</span>
     <input type="text" name="nickname" class="form-control" placeholder="昵称 (置空将清除)"
       value="{% if user.nickname %}{{ user.nickname }}{% endif %}">
-  </div>
-  <div class="input-group mb-3">
-    <span class="input-group-text">密码</span>
-    <input type="password" name="password" class="form-control" placeholder="密码 (置空不修改)">
   </div>
   <div class="input-group mb-3">
     <span class="input-group-text">联系方式</span>

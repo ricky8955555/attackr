@@ -1,3 +1,4 @@
+pub mod artifact;
 pub mod challenge;
 pub mod problemset;
 pub mod root;
@@ -62,6 +63,7 @@ impl<T> OptionResponseExt<T> for Option<T> {
 pub fn stage() -> AdHoc {
     AdHoc::on_ignite("Admin Pages", |rocket| async {
         rocket
+            .attach(artifact::stage())
             .attach(challenge::stage())
             .attach(problemset::stage())
             .attach(root::stage())

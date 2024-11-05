@@ -1,0 +1,70 @@
+{% extends "admin/base" %}
+
+{% block header %}
+<h1 class="mt-5 text-center">查看产物详情</h1>
+{% endblock %}
+
+{% block content %}
+<div class="btn-toolbar mb-3">
+  <div class="btn-group">
+    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rebuildModal">重新构建</button>
+  </div>
+</div>
+
+<h4 class="mb-3">题目信息</h4>
+<ul class="list-group text-start text-break mb-5">
+  <li class="list-group-item">ID: {{ artifact.id }}</li>
+  <li class="list-group-item">
+    用户:
+    {% if user %}
+    {{ user.username }}
+    {% else %}
+    (静态构造)
+    {% endif %}
+  </li>
+  <li class="list-group-item">题目: {{ challenge.name }}</li>
+  <li class="list-group-item">Flag: {{ artifact.flag }}</li>
+  <li class="list-group-item">路径: {{ artifact.path }}</li>
+</ul>
+
+<div class="row mb-4 mb-3">
+  <h4>产物信息</h4>
+  {% for info in artifact.info %}
+  <div class="col-lg-3">
+    <ul class="list-group text-start text-break mb-3">
+      <li class="list-group-item list-group-item-secondary">构建 {{ loop.index }}</li>
+      <li class="list-group-item">产物类型: {{ info.type }}</li>
+      {% if info.type == "Binary" %}
+      <li class="list-group-item">路径: {{ info.path }}</li>
+      {% elif info.type == "Docker" %}
+      <li class="list-group-item">镜像 ID: {{ info.id }}</li>
+      <li class="list-group-item">配置: {{ info.config }}</li>
+      {% endif %}
+    </ul>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="modal fade" id="rebuildModal" tabindex="-1" aria-labelledby="rebuildModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="rebuildModalLabel">重新构建</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>确定要重新构建吗？</p>
+        <p>如果进行重新构建，产物 Flag 将有可能发生改变。</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+        <a class="btn btn-danger" href="/admin/artifact/{{ artifact.id }}/rebuild">确定</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="/static/js/markdown.js" type="module"></script>
+{% endblock %}

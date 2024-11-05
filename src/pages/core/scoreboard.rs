@@ -14,7 +14,7 @@ use crate::{
         query::{
             challenge::{list_challenges, list_problemset_challenges},
             problemset::list_problemsets,
-            scores::list_scores,
+            scores::{list_problemset_scores, list_scores},
             solved::list_effective_solved,
             user::list_active_challengers,
         },
@@ -74,11 +74,13 @@ async fn index(
 
     let zero_point = (PrimitiveDateTime::MIN, 0.0);
 
-    let mut scores = list_scores(&db)
-        .await
-        .resp_expect("获取得分信息失败")?
-        .into_iter()
-        .into_group_map_by(|score| score.user);
+    let mut scores = match problemset {
+        Some(id) => list_problemset_scores(&db, id).await,
+        None => list_scores(&db).await,
+    }
+    .resp_expect("获取得分信息失败")?
+    .into_iter()
+    .into_group_map_by(|score| score.user);
 
     let mut no_scores = Vec::new();
 

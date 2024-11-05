@@ -20,7 +20,8 @@
         </div>
       </li>
       <li class="list-group-item fw-medium text-secondary" id="name"
-        style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ">{{ user.nickname or user.username }}</li>
+        style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ user.nickname or user.username }}
+      </li>
       <li class="list-group-item">用户名: {{ user.username }}</li>
       <li class="list-group-item">权限组: {{ user.role }}</li>
       {% if is_self %}

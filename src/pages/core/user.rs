@@ -15,7 +15,10 @@ use crate::{
     db::{
         models::{User, UserRole},
         query::{
-            challenge::list_challenges, problemset::list_problemsets, solved::list_user_solved, user::{add_user, get_user, get_user_by_username, update_user}
+            challenge::list_challenges,
+            problemset::list_problemsets,
+            solved::list_user_solved,
+            user::{add_user, get_user, get_user_by_username, update_user},
         },
         Db,
     },
@@ -105,9 +108,7 @@ async fn view(
         .map(|challenge| {
             let solved = solved.get(&challenge.id.unwrap());
 
-            let points = solved
-                .map(|data| data.score.points)
-                .unwrap_or(0.0);
+            let points = solved.map(|data| data.score.points).unwrap_or(0.0);
 
             context! {
                 solved,

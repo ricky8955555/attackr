@@ -50,12 +50,6 @@
   </div>
 </div>
 
-<div class="btn-toolbar mb-3 justify-content-end">
-  <div class="btn-group">
-    <a class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#clearModal">清除</a>
-  </div>
-</div>
-
 <table class="table mb-5">
   <thead>
     <tr>
@@ -82,25 +76,4 @@
     {% endfor %}
   </tbody>
 </table>
-
-<div class="modal fade" id="clearModal" tabindex="-1" aria-labelledby="clearModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="clearModalLabel">清除</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        确定清除吗？清除将会删除当前页面所显示的所有提交记录。
-      </div>
-      <div class="modal-footer">
-        <form method="post">
-          <input type="hidden" name="_method" value="delete">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
-          <button type="submit" class="btn btn-danger">清除</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
 {% endblock %}

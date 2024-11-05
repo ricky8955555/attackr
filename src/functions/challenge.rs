@@ -21,17 +21,15 @@ use crate::{
     configs::challenge::{MappedAddr, CONFIG},
     core::conductor::{self, Artifact, BuildInfo, RunDockerResult},
     db::{
-        models::{Artifact as ArtifactEntry, Challenge, Solved, Submission},
+        models::{Artifact as ArtifactEntry, Challenge, Score, Solved, Submission},
         query::{
             artifact::{
                 delete_artifact, delete_dynamic_artifact, get_artifact, list_challenge_artifacts,
                 update_artifact,
             },
             challenge::{delete_challenge, get_challenge, list_challenges, update_challenge},
-            solved::{
-                add_solved, count_challenge_effective_solved, list_challenge_effective_solved,
-                update_all_solved,
-            },
+            scores::add_score,
+            solved::{list_challenge_effective_solved_with_submission, update_solved},
             submission::add_submission,
         },
         Db,
@@ -189,41 +187,40 @@ async fn calculate_factor(raw: f64, solved: i64) -> Result<f64> {
     Ok(raw)
 }
 
-async fn get_challenge_factor(db: &Db, challenge: i32) -> Result<f64> {
-    let is_dyn = DYNPOINTS_INSTANCE.is_some();
-
-    if !is_dyn {
-        return Ok(1.0);
-    }
-
-    let entry = get_challenge(db, challenge).await?;
-
-    let solved = count_challenge_effective_solved(db, challenge).await?;
-    let factor = calculate_factor(entry.initial, solved).await?;
-
-    Ok(factor)
-}
-
-pub fn calculate_user_points(challenge: &Challenge, solved: &Solved) -> f64 {
-    challenge.points * solved.factor
-}
-
 async fn recalculate_challenge_points_consumed(db: &Db, mut challenge: Challenge) -> Result<()> {
-    let mut solved = list_challenge_effective_solved(db, challenge.id.unwrap()).await?;
-    let mut results = Vec::with_capacity(solved.len());
+    let mut solved =
+        list_challenge_effective_solved_with_submission(db, challenge.id.unwrap()).await?;
 
-    solved.sort_unstable_by_key(|x| x.submission.time);
+    solved.sort_unstable_by_key(|x| x.1.time);
 
-    for (idx, mut data) in solved.into_iter().enumerate() {
-        let factor = calculate_factor(challenge.initial, idx as i64).await?;
-        data.solved.factor = factor;
-        results.push(data.solved);
-    }
+    let now = primitive_now();
 
-    let points = calculate_points(challenge.initial, results.len() as i64).await?;
+    let points = calculate_points(challenge.initial, solved.len() as i64).await?;
     challenge.points = points;
 
-    update_all_solved(db, results).await?;
+    for (idx, data) in solved.into_iter().enumerate() {
+        let factor = calculate_factor(challenge.initial, idx as i64).await?;
+        let value = points * factor;
+
+        let score = Score {
+            id: None,
+            user: data.1.user,
+            challenge: data.1.challenge,
+            time: now,
+            points: value,
+        };
+
+        let score = add_score(db, score).await?;
+
+        let entry = Solved {
+            id: data.0.id,
+            submission: data.1.id.unwrap(),
+            score: Some(score),
+        };
+
+        update_solved(db, entry).await?;
+    }
+
     update_challenge(db, challenge).await?;
 
     Ok(())
@@ -628,14 +625,12 @@ pub async fn open_attachment(db: &Db, challenge: i32, attachment: usize) -> Resu
 }
 
 pub async fn solve_challenge(db: &Db, user: i32, challenge: i32, flag: &str) -> Result<bool> {
-    let mut entry = get_challenge(db, challenge).await?;
+    let entry = get_challenge(db, challenge).await?;
 
     let artifact = match entry.dynamic {
         true => Some(get_artifact(db, challenge, entry.dynamic.then_some(user)).await?),
         false => None,
     };
-
-    let expected = artifact.as_ref().map(|x| &x.flag).unwrap_or(&entry.flag);
 
     let now = primitive_now();
 
@@ -649,28 +644,23 @@ pub async fn solve_challenge(db: &Db, user: i32, challenge: i32, flag: &str) -> 
 
     let submission = add_submission(db, submission).await?;
 
+    let expected = artifact.as_ref().map(|x| &x.flag).unwrap_or(&entry.flag);
+
     if flag != expected {
         return Ok(false);
     }
 
-    let factor = get_challenge_factor(db, challenge).await?;
-
     let solved = Solved {
         id: None,
         submission,
-        factor,
+        score: None,
     };
 
-    add_solved(db, solved).await?;
-
-    let solved = count_challenge_effective_solved(db, challenge).await?;
-    let points = calculate_points(entry.initial, solved).await?;
-
-    entry.points = points;
+    update_solved(db, solved).await?;
 
     let dynamic = entry.dynamic;
 
-    update_challenge(db, entry).await?;
+    recalculate_challenge_points_consumed(db, entry).await?;
 
     if let Some(artifact) = artifact {
         if CONFIG.clear_on_solved && dynamic {

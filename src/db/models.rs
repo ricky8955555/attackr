@@ -180,6 +180,32 @@ pub struct Submission {
     Insertable,
     Queryable,
     Associations,
+    Identifiable,
+    Selectable,
+    AsChangeset,
+    Validate,
+)]
+#[serde(crate = "rocket::serde")]
+#[diesel(belongs_to(User, foreign_key = user))]
+#[diesel(belongs_to(Challenge, foreign_key = challenge))]
+#[diesel(table_name = scores)]
+pub struct Score {
+    pub id: Option<i32>,
+    pub user: i32,
+    pub challenge: i32,
+    pub time: PrimitiveDateTime,
+    #[validate(range(min = 0.0))]
+    pub points: f64,
+}
+
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    Insertable,
+    Queryable,
+    Associations,
     Selectable,
     Identifiable,
     AsChangeset,
@@ -191,14 +217,15 @@ pub struct Submission {
 pub struct Solved {
     pub id: Option<i32>,
     pub submission: i32,
-    #[validate(range(min = 0.0))]
-    pub factor: f64,
+    pub score: Option<i32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SolvedWithSubmission {
+pub struct DetailedSolved {
     #[serde(flatten)]
     pub submission: Submission,
+    #[serde(flatten)]
+    pub score: Score,
     #[serde(flatten)]
     pub solved: Solved,
 }

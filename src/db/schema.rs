@@ -33,14 +33,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    solved (id) {
-        id -> Nullable<Integer>,
-        submission -> Integer,
-        factor -> Double,
-    }
-}
-
-diesel::table! {
     submissions (id) {
         id -> Nullable<Integer>,
         user -> Integer,
@@ -65,9 +57,30 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    scores (id) {
+        id -> Nullable<Integer>,
+        user -> Integer,
+        challenge -> Integer,
+        time -> Timestamp,
+        points -> Double,
+    }
+}
+
+diesel::table! {
+    solved (id) {
+        id -> Nullable<Integer>,
+        submission -> Integer,
+        score -> Nullable<Integer>,
+    }
+}
+
 diesel::joinable!(artifacts -> challenges (challenge));
 diesel::joinable!(artifacts -> users (user));
 diesel::joinable!(challenges -> problemsets (problemset));
+diesel::joinable!(scores -> challenges (challenge));
+diesel::joinable!(scores -> users (user));
+diesel::joinable!(solved -> scores (score));
 diesel::joinable!(solved -> submissions (submission));
 diesel::joinable!(submissions -> challenges (challenge));
 diesel::joinable!(submissions -> users (user));
@@ -76,6 +89,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     artifacts,
     challenges,
     problemsets,
+    scores,
     solved,
     submissions,
     users,

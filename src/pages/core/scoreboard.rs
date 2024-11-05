@@ -1,5 +1,6 @@
 use std::{cmp::Ordering, collections::HashMap};
 
+use itertools::Itertools;
 use rocket::{
     fairing::AdHoc,
     http::{uri::Origin, CookieJar},
@@ -13,16 +14,13 @@ use crate::{
         query::{
             challenge::{list_challenges, list_problemset_challenges},
             problemset::list_problemsets,
+            scores::list_scores,
             solved::list_effective_solved,
             user::list_active_challengers,
         },
         Db,
     },
-    functions::{
-        challenge::{calculate_user_points, is_publicly_available},
-        event::primitive_now,
-        user::auth_session,
-    },
+    functions::{challenge::is_publicly_available, event::primitive_now, user::auth_session},
     pages::{Error, Result},
 };
 
@@ -76,6 +74,14 @@ async fn index(
 
     let zero_point = (PrimitiveDateTime::MIN, 0.0);
 
+    let mut scores = list_scores(&db)
+        .await
+        .resp_expect("获取得分信息失败")?
+        .into_iter()
+        .into_group_map_by(|score| score.user);
+
+    let mut no_scores = Vec::new();
+
     let mut progresses: Vec<_> = list_active_challengers(&db)
         .await
         .resp_expect("获取题目列表失败")?
@@ -85,27 +91,27 @@ async fn index(
                 .iter()
                 .map(|challenge| {
                     let solved = solved.get(&(user.id.unwrap(), challenge.id.unwrap()));
-                    let points = solved
-                        .map(|data| calculate_user_points(challenge, &data.solved))
-                        .unwrap_or(0.0);
+                    let points = solved.map(|data| data.score.points).unwrap_or(0.0);
 
                     context! {solved, points}
                 })
                 .collect();
 
-            let mut dataset: Vec<_> = solved
-                .iter()
-                .filter_map(|x| x.solved.map(|data| (&data.submission, x.points)))
-                .collect();
+            let scores = scores
+                .get_mut(&user.id.unwrap()) // reduce unnecessary cost.
+                .unwrap_or_else(|| &mut no_scores);
 
-            dataset.sort_unstable_by_key(|x| x.0.time);
+            scores.sort_unstable_by_key(|x| x.time);
 
-            let mut dataset = dataset.into_iter().fold(vec![zero_point], |mut v, x| {
-                v.push((x.0.time, v.last().unwrap().1 + x.1));
-                v
-            });
+            let mut points = HashMap::new();
+            let mut dataset = Vec::new();
 
-            dataset.remove(0);
+            for score in scores {
+                points.insert(score.challenge, score.points);
+
+                let value: f64 = points.values().sum();
+                dataset.push((score.time, value));
+            }
 
             context! { dataset, solved, user }
         })

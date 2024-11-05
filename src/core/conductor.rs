@@ -14,7 +14,7 @@ use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
-    net::{IpAddr, Ipv4Addr, Ipv6Addr},
+    net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener},
     ops::RangeInclusive,
     path::Path,
 };
@@ -356,6 +356,11 @@ async fn execute_docker_step<P: AsRef<Path>>(
     bail!("no response from build_image.");
 }
 
+fn is_port_free(addr: IpAddr, port: u16) -> bool {
+    let addr = SocketAddr::new(addr, port);
+    TcpListener::bind(addr).is_ok()
+}
+
 pub async fn run_docker(
     artifact: &DockerArtifact,
     options: &DockerRunOptions,
@@ -372,7 +377,7 @@ pub async fn run_docker(
                 .ports
                 .clone()
                 .unwrap_or(1..=65535u16)
-                .filter(|port| port_check::is_local_port_free(*port)),
+                .filter(|port| options.addrs.iter().all(|addr| is_port_free(*addr, *port))),
         )
         .collect();
 

@@ -15,15 +15,12 @@ use crate::{
     db::{
         models::{User, UserRole},
         query::{
-            challenge::list_challenges,
-            problemset::list_problemsets,
-            solved::list_user_solved,
-            user::{add_user, get_user, get_user_by_username, update_user},
+            challenge::list_challenges, problemset::list_problemsets, solved::list_user_solved, user::{add_user, get_user, get_user_by_username, update_user}
         },
         Db,
     },
     functions::{
-        challenge::{calculate_user_points, is_publicly_available},
+        challenge::is_publicly_available,
         user::{
             auth_session as functional_auth_session, destroy_session, hash_password, new_session,
             verify_password,
@@ -109,7 +106,7 @@ async fn view(
             let solved = solved.get(&challenge.id.unwrap());
 
             let points = solved
-                .map(|data| calculate_user_points(&challenge, &data.solved))
+                .map(|data| data.score.points)
                 .unwrap_or(0.0);
 
             context! {

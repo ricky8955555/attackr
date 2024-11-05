@@ -19,17 +19,13 @@ use crate::{
         query::{
             artifact::get_artifact,
             challenge::{get_challenge, list_challenges},
-            problemset::list_problemsets,
-            solved::{
-                count_challenge_effective_solved, get_solved, list_effective_solved,
-                list_user_solved,
-            },
+            problemset::list_problemsets, solved::{count_challenge_effective_solved, get_solved, list_effective_solved, list_user_solved},
         },
         Db,
     },
     functions::{
         challenge::{
-            build_challenge, calculate_user_points, docker_expiry, get_docker_port_bindings,
+            build_challenge, docker_expiry, get_docker_port_bindings,
             is_docker_running, is_publicly_available, open_attachment, open_binary, run_docker,
             solve_challenge, stop_docker,
         },
@@ -110,7 +106,7 @@ async fn index(jar: &CookieJar<'_>, db: Db, flash: Option<FlashMessage<'_>>) -> 
             let user_solved = user_solved.get(&challenge_id);
 
             let points = user_solved
-                .map(|data| calculate_user_points(&challenge, &data.solved))
+                .map(|data| data.score.points)
                 .unwrap_or(0.0);
 
             context! {

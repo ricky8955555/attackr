@@ -5,33 +5,20 @@ use diesel::QueryResult;
 use validator::Validate;
 
 use crate::db::{
-    models::{Solved, SolvedWithSubmission, Submission, UserRole},
-    schema::{solved, submissions, users},
+    models::{DetailedSolved, Score, Solved, Submission, UserRole},
+    schema::{scores, solved, submissions, users},
     Db,
 };
 
-fn tuple_to_struct(tuple: (Solved, Submission)) -> SolvedWithSubmission {
-    SolvedWithSubmission {
+fn tuple_to_struct(tuple: (Solved, Submission, Score)) -> DetailedSolved {
+    DetailedSolved {
         submission: tuple.1,
+        score: tuple.2,
         solved: tuple.0,
     }
 }
 
-pub async fn add_solved(db: &Db, solved: Solved) -> AnyResult<i32> {
-    solved.validate()?;
-
-    Ok(db
-        .run(move |conn| {
-            diesel::insert_into(solved::table)
-                .values(&solved)
-                .returning(solved::id)
-                .get_result(conn)
-        })
-        .await
-        .map(|id: Option<i32>| id.expect("returning guarantees id present"))?)
-}
-
-pub async fn update_all_solved(db: &Db, solved: Vec<Solved>) -> AnyResult<()> {
+pub async fn update_solved(db: &Db, solved: Solved) -> AnyResult<()> {
     solved.validate()?;
 
     db.run(move |conn| {
@@ -44,11 +31,12 @@ pub async fn update_all_solved(db: &Db, solved: Vec<Solved>) -> AnyResult<()> {
     Ok(())
 }
 
-pub async fn get_solved(db: &Db, user: i32, challenge: i32) -> QueryResult<SolvedWithSubmission> {
+pub async fn get_solved(db: &Db, user: i32, challenge: i32) -> QueryResult<DetailedSolved> {
     Ok(tuple_to_struct(
         db.run(move |conn| {
             solved::table
                 .inner_join(submissions::table)
+                .inner_join(scores::table)
                 .filter(
                     submissions::user
                         .eq(user)
@@ -60,11 +48,12 @@ pub async fn get_solved(db: &Db, user: i32, challenge: i32) -> QueryResult<Solve
     ))
 }
 
-pub async fn list_user_solved(db: &Db, id: i32) -> QueryResult<Vec<SolvedWithSubmission>> {
+pub async fn list_user_solved(db: &Db, id: i32) -> QueryResult<Vec<DetailedSolved>> {
     Ok(db
         .run(move |conn| {
             solved::table
                 .inner_join(submissions::table)
+                .inner_join(scores::table)
                 .filter(submissions::user.eq(id))
                 .load(conn)
         })
@@ -90,10 +79,10 @@ pub async fn count_challenge_effective_solved(db: &Db, id: i32) -> QueryResult<i
     .await
 }
 
-pub async fn list_challenge_effective_solved(
+pub async fn list_challenge_effective_solved_with_submission(
     db: &Db,
     id: i32,
-) -> QueryResult<Vec<SolvedWithSubmission>> {
+) -> QueryResult<Vec<(Solved, Submission)>> {
     Ok(db
         .run(move |conn| {
             solved::table
@@ -109,21 +98,25 @@ pub async fn list_challenge_effective_solved(
         })
         .await?
         .into_iter()
-        .map(tuple_to_struct)
         .collect())
 }
 
-pub async fn list_effective_solved(db: &Db) -> QueryResult<Vec<SolvedWithSubmission>> {
+pub async fn list_effective_solved(db: &Db) -> QueryResult<Vec<DetailedSolved>> {
     Ok(db
         .run(move |conn| {
             solved::table
                 .inner_join(submissions::table.inner_join(users::table))
+                .inner_join(scores::table)
                 .filter(
                     users::role
                         .eq(UserRole::Challenger)
                         .and(users::enabled.eq(true)),
                 )
-                .select((Solved::as_select(), Submission::as_select()))
+                .select((
+                    Solved::as_select(),
+                    Submission::as_select(),
+                    Score::as_select(),
+                ))
                 .load(conn)
         })
         .await?

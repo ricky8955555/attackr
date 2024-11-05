@@ -4,4 +4,5 @@ DROP TABLE "users";
 DROP TABLE "problemsets";
 DROP TABLE "challenges";
 DROP TABLE "artifacts";
+DROP TABLE "submissions";
 DROP TABLE "solved";

@@ -33,6 +33,17 @@ pub async fn update_challenge(db: &Db, challenge: Challenge) -> AnyResult<()> {
     Ok(())
 }
 
+pub async fn publish_challenge(db: &Db, id: i32) -> QueryResult<()> {
+    db.run(move |conn| {
+        diesel::update(challenges::table.filter(challenges::id.eq(id)))
+            .set(challenges::public.eq(true))
+            .execute(conn)
+    })
+    .await?;
+
+    Ok(())
+}
+
 pub async fn get_challenge(db: &Db, id: i32) -> QueryResult<Challenge> {
     db.run(move |conn| challenges::table.filter(challenges::id.eq(id)).first(conn))
         .await
@@ -49,6 +60,15 @@ pub async fn list_problemset_challenges(db: &Db, id: i32) -> QueryResult<Vec<Cha
 
 pub async fn list_challenges(db: &Db) -> QueryResult<Vec<Challenge>> {
     db.run(move |conn| challenges::table.load(conn)).await
+}
+
+pub async fn list_private_challenges(db: &Db) -> QueryResult<Vec<Challenge>> {
+    db.run(move |conn| {
+        challenges::table
+            .filter(challenges::public.eq(false))
+            .load(conn)
+    })
+    .await
 }
 
 pub async fn delete_challenge(db: &Db, id: i32) -> QueryResult<()> {

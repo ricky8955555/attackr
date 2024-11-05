@@ -1,0 +1,54 @@
+{% extends "admin/base" %}
+
+{% block header %}
+<h1 class="mt-5 text-center">公开题目</h1>
+{% endblock %}
+
+{% block content %}
+<form method="post">
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">ID</th>
+        <th scope="col">名称</th>
+        <th scope="col">附属题集</th>
+        <th scope="col">类型</th>
+        <th scope="col">初始分</th>
+        <th scope="col">分数</th>
+        <th scope="col">公开</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for problemset, challenge in challenges %}
+      <tr>
+        <th scope="row">{{ challenge.id }}</th>
+        <td>{{ challenge.name }}</td>
+        <td>
+          {% if problemset %}
+          {{ problemset.name }}
+          {% else %}
+          none
+          {% endif %}
+        </td>
+        <td>
+          {% if challenge.dynamic %}
+          动态
+          {% else %}
+          静态
+          {% endif %}
+        </td>
+        <td>{{ challenge.initial }}</td>
+        <td>
+          {% from 'functions/points' import display as display_points %}
+          {{ display_points(challenge.points) }}
+        </td>
+        <td>
+          <input class="form-check-input" type="checkbox" name="challenges[]" value="{{ challenge.id }}">
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <button type="submit" class="btn btn-outline-primary mb-3">应用</button>
+</form>
+{% endblock %}

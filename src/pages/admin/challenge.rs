@@ -15,7 +15,8 @@ use crate::{
         models::Challenge,
         query::{
             challenge::{
-                add_challenge, delete_challenge, get_challenge, list_challenges, update_challenge,
+                add_challenge, delete_challenge, get_challenge, list_challenges,
+                list_private_challenges, publish_challenge, update_challenge,
             },
             problemset::list_problemsets,
         },
@@ -33,14 +34,8 @@ use super::{check_permission, ResultResponseExt};
 #[allow(clippy::declare_interior_mutable_const)]
 pub const ROOT: Origin<'static> = uri!("/admin/challenge");
 
-#[derive(Debug, Clone, FromFormField, PartialEq, Eq)]
-enum FlagType {
-    Dynamic,
-    Static,
-}
-
 #[derive(Debug, FromForm)]
-struct EditChallenge<'r> {
+struct Edit<'r> {
     pub name: &'r str,
     pub description: &'r str,
     pub problemset: Option<i32>,
@@ -49,7 +44,7 @@ struct EditChallenge<'r> {
 }
 
 #[derive(Debug, FromForm)]
-struct NewChallenge<'r> {
+struct New<'r> {
     pub name: &'r str,
     pub description: &'r str,
     pub points: f64,
@@ -61,12 +56,15 @@ struct NewChallenge<'r> {
     pub public: bool,
 }
 
+#[derive(Debug, FromForm)]
+struct Publish {
+    pub challenges: Vec<i32>,
+}
+
 #[get("/")]
 async fn index(jar: &CookieJar<'_>, db: Db, flash: Option<FlashMessage<'_>>) -> Result<Template> {
     let current = auth_session(&db, jar).await?;
     check_permission(&current)?;
-
-    let challenges = list_challenges(&db).await.resp_expect("获取题目列表失败")?;
 
     let problemsets: HashMap<_, _> = list_problemsets(&db)
         .await
@@ -75,7 +73,9 @@ async fn index(jar: &CookieJar<'_>, db: Db, flash: Option<FlashMessage<'_>>) -> 
         .map(|problemset| (problemset.id.unwrap(), problemset))
         .collect();
 
-    let challenges: Vec<_> = challenges
+    let challenges: Vec<_> = list_challenges(&db)
+        .await
+        .resp_expect("获取题目列表失败")?
         .into_iter()
         .map(|x| (x.problemset.as_ref().and_then(|id| problemsets.get(id)), x))
         .collect();
@@ -83,6 +83,52 @@ async fn index(jar: &CookieJar<'_>, db: Db, flash: Option<FlashMessage<'_>>) -> 
     Ok(Template::render(
         "admin/challenge/index",
         context! {flash, challenges},
+    ))
+}
+
+#[get("/publish")]
+async fn publish_page(
+    jar: &CookieJar<'_>,
+    db: Db,
+    flash: Option<FlashMessage<'_>>,
+) -> Result<Template> {
+    let current = auth_session(&db, jar).await?;
+    check_permission(&current)?;
+
+    let problemsets: HashMap<_, _> = list_problemsets(&db)
+        .await
+        .resp_expect("获取题集列表失败")?
+        .into_iter()
+        .map(|problemset| (problemset.id.unwrap(), problemset))
+        .collect();
+
+    let challenges: Vec<_> = list_private_challenges(&db)
+        .await
+        .resp_expect("获取题目列表失败")?
+        .into_iter()
+        .map(|x| (x.problemset.as_ref().and_then(|id| problemsets.get(id)), x))
+        .collect();
+
+    Ok(Template::render(
+        "admin/challenge/publish",
+        context! {flash, challenges},
+    ))
+}
+
+#[post("/publish", data = "<info>")]
+async fn publish(jar: &CookieJar<'_>, db: Db, info: Form<Publish>) -> Result<Flash<Redirect>> {
+    let current = auth_session(&db, jar).await?;
+    check_permission(&current)?;
+
+    for id in &info.challenges {
+        publish_challenge(&db, *id)
+            .await
+            .flash_expect(uri!(ROOT, publish_page), &format!("公开 ID {id} 题目失败"))?;
+    }
+
+    Ok(Flash::success(
+        Redirect::to(uri!(ROOT, index)),
+        "公开题目成功",
     ))
 }
 
@@ -106,11 +152,7 @@ async fn new_page(
 }
 
 #[post("/new", data = "<info>")]
-async fn new(
-    jar: &CookieJar<'_>,
-    db: Db,
-    mut info: Form<NewChallenge<'_>>,
-) -> Result<Flash<Redirect>> {
+async fn new(jar: &CookieJar<'_>, db: Db, mut info: Form<New<'_>>) -> Result<Flash<Redirect>> {
     let current = auth_session(&db, jar).await?;
     check_permission(&current)?;
 
@@ -196,7 +238,7 @@ async fn edit(
     jar: &CookieJar<'_>,
     db: Db,
     id: i32,
-    info: Form<EditChallenge<'_>>,
+    info: Form<Edit<'_>>,
 ) -> Result<Flash<Redirect>> {
     let current = auth_session(&db, jar).await?;
     check_permission(&current)?;
@@ -293,6 +335,8 @@ async fn recalculate(jar: &CookieJar<'_>, db: Db) -> Result<Flash<Redirect>> {
 pub fn stage() -> AdHoc {
     let routes = routes![
         index,
+        publish_page,
+        publish,
         new_page,
         new,
         edit_page,

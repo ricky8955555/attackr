@@ -101,7 +101,7 @@ async fn index(
 
             let scores = scores
                 .get_mut(&user.id.unwrap()) // reduce unnecessary cost.
-                .unwrap_or_else(|| &mut no_scores);
+                .unwrap_or(&mut no_scores);
 
             scores.sort_unstable_by_key(|x| x.time);
 

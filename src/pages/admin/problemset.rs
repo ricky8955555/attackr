@@ -24,7 +24,7 @@ use super::{check_permission, ResultResponseExt};
 pub const ROOT: Origin<'static> = uri!("/admin/problemset");
 
 #[derive(Debug, Clone, FromForm)]
-struct ProblemSetInfo<'r> {
+struct ProblemsetInfo<'r> {
     pub name: &'r str,
 }
 
@@ -59,7 +59,7 @@ async fn new_page(
 async fn new(
     jar: &CookieJar<'_>,
     db: Db,
-    info: Form<ProblemSetInfo<'_>>,
+    info: Form<ProblemsetInfo<'_>>,
 ) -> Result<Flash<Redirect>> {
     let current = auth_session(&db, jar).await?;
     check_permission(&current)?;
@@ -102,7 +102,7 @@ async fn edit(
     jar: &CookieJar<'_>,
     db: Db,
     id: i32,
-    info: Form<ProblemSetInfo<'_>>,
+    info: Form<ProblemsetInfo<'_>>,
 ) -> Result<Flash<Redirect>> {
     let current = auth_session(&db, jar).await?;
     check_permission(&current)?;

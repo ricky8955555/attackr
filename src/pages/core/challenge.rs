@@ -47,6 +47,7 @@ pub const ROOT: Origin<'static> = uri!("/challenge");
 
 #[derive(Debug, Clone, FromForm)]
 struct Solve<'r> {
+    #[field(validate = len(1..))]
     pub flag: &'r str,
 }
 

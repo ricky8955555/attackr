@@ -37,9 +37,9 @@ impl Default for UserRole {
 }
 
 fn validate_username(username: &str) -> Result<(), ValidationError> {
-    if !username.is_ascii() || username.contains(' ') {
+    if !username.chars().all(|c| c.is_ascii_alphanumeric()) {
         return Err(ValidationError::new(
-            "username should not contains non-ascii characters or spaces.",
+            "username should contains only ascii alphanumeric.",
         ));
     }
 
@@ -63,7 +63,7 @@ fn validate_username(username: &str) -> Result<(), ValidationError> {
 #[diesel(treat_none_as_null = true)]
 pub struct User {
     pub id: Option<i32>,
-    #[validate(length(min = 1, max = 25), custom(function = "validate_username"))]
+    #[validate(length(min = 3, max = 25), custom(function = "validate_username"))]
     pub username: String,
     #[serde(skip_serializing)]
     pub password: String,

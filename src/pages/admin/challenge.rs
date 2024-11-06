@@ -39,14 +39,17 @@ struct Edit<'r> {
     pub name: &'r str,
     pub description: &'r str,
     pub problemset: Option<i32>,
+    #[field(validate = with(|x| x.map(|v| v >= 1.0).unwrap_or(true), "points too low."))]
     pub points: Option<f64>,
     pub public: bool,
 }
 
 #[derive(Debug, FromForm)]
 struct New<'r> {
+    #[field(validate = len(1..))]
     pub name: &'r str,
     pub description: &'r str,
+    #[field(validate = with(|x| *x >= 1.0, "points too low."))]
     pub points: f64,
     pub problemset: Option<i32>,
     pub source: Option<TempFile<'r>>,

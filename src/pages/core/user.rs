@@ -9,6 +9,7 @@ use rocket::{
 };
 use rocket_dyn_templates::{context, Template};
 use sha2::{Digest, Sha256};
+use validator::Validate;
 
 use crate::{
     configs::user::CONFIG,
@@ -38,26 +39,36 @@ use super::ResultResponseExt;
 #[allow(clippy::declare_interior_mutable_const)]
 pub const ROOT: Origin<'static> = uri!("/user");
 
-#[derive(Debug, Clone, FromForm)]
+#[derive(Debug, Clone, FromForm, Validate)]
 struct Login<'r> {
+    #[field(validate = with(|x| (3..=25).contains(&x.len()) && x.chars().all(|c| c.is_ascii_alphanumeric()), "invalid username"))]
     pub username: &'r str,
+    #[field(validate = len(6..))]
     pub password: &'r str,
 }
 
-#[derive(Debug, Clone, FromForm)]
+#[derive(Debug, Clone, FromForm, Validate)]
 struct Register<'r> {
+    #[field(validate = with(|x| (3..=25).contains(&x.len()) && x.chars().all(|c| c.is_ascii_alphanumeric()), "invalid username"))]
     pub username: &'r str,
+    #[field(validate = len(6..))]
     pub password: &'r str,
+    #[field(validate = contains('@'))]
     pub email: &'r str,
+    #[field(validate = len(1..))]
     pub contact: &'r str,
+    #[field(validate = len(..=60))]
     pub nickname: &'r str,
 }
 
-#[derive(Debug, Clone, FromForm)]
+#[derive(Debug, Clone, FromForm, Validate)]
 struct Edit<'r> {
+    #[field(validate = with(|x| x.is_empty() || (6..).contains(&x.len()), "password too short"))]
     pub password: &'r str,
+    #[field(validate = with(|x| x.is_empty() || x.contains('@'), "incorrect email"))]
     pub email: &'r str,
     pub contact: &'r str,
+    #[field(validate = with(|x| x.is_empty() || (..=60).contains(&x.len()), "nickname too long"))]
     pub nickname: &'r str,
 }
 
@@ -189,13 +200,6 @@ fn login_page(flash: Option<FlashMessage<'_>>) -> Template {
 
 #[post("/login", data = "<login>")]
 async fn login(jar: &CookieJar<'_>, db: Db, login: Form<Login<'_>>) -> Result<Redirect> {
-    if login.username.is_empty() || login.password.is_empty() {
-        return Err(Error::redirect(
-            uri!(ROOT, login_page),
-            "用户名和密码不能为空",
-        ));
-    }
-
     if let Ok(user) = get_user_by_username(&db, login.username.to_string()).await {
         if !user.enabled {
             return Err(Error::redirect(uri!(ROOT, login_page), "用户被禁用"));

@@ -25,12 +25,15 @@ pub const ROOT: Origin<'static> = uri!("/admin/user");
 
 #[derive(Debug, Clone, FromForm)]
 struct UserInfo<'r> {
+    #[field(validate = with(|x| x.is_empty() || (6..).contains(&x.len()), "password too short"))]
     pub password: &'r str,
-    pub contact: &'r str,
+    #[field(validate = with(|x| x.is_empty() || x.contains('@'), "incorrect email"))]
     pub email: &'r str,
+    pub contact: &'r str,
+    #[field(validate = with(|x| x.is_empty() || (..=60).contains(&x.len()), "nickname too long"))]
+    pub nickname: &'r str,
     pub enabled: bool,
     pub role: UserRole,
-    pub nickname: &'r str,
 }
 
 #[get("/")]

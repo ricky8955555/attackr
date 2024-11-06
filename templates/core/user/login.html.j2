@@ -8,11 +8,12 @@
 <form method="post">
   <div class="input-group mb-3">
     <span class="input-group-text">用户名</span>
-    <input type="text" name="username" class="form-control" placeholder="用户名" maxlength="25" required>
+    <input type="text" name="username" class="form-control" placeholder="用户名" minlength="3" maxlength="25"
+      pattern="[a-zA-Z0-9]{3,25}" required>
   </div>
   <div class="input-group mb-3">
     <span class="input-group-text">密码</span>
-    <input type="password" name="password" class="form-control" placeholder="密码" required>
+    <input type="password" name="password" class="form-control" placeholder="密码" minlength="6" required>
   </div>
   <button type="submit" class="btn btn-outline-primary mb-3">登录</button>
   <a class="btn btn-outline-secondary mb-3" href="/user/register">注册</a>

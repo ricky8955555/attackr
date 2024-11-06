@@ -48,7 +48,7 @@ where
     }
 }
 
-pub trait OptionResponseExt<T> {
+trait OptionResponseExt<T> {
     #[allow(dead_code)]
     fn resp_expect(self, msg: &str) -> Result<T>;
 }

@@ -50,7 +50,7 @@ where
     }
 }
 
-pub trait OptionResponseExt<T> {
+trait OptionResponseExt<T> {
     fn resp_expect(self, msg: &str) -> Result<T>;
 }
 

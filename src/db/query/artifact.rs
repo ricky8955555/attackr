@@ -96,6 +96,17 @@ pub async fn delete_artifact(db: &Db, challenge: i32, user: Option<i32>) -> Quer
     }
 }
 
+pub async fn delete_artifact_by_id(db: &Db, id: i32) -> QueryResult<()> {
+    db.run(move |conn| {
+        diesel::delete(artifacts::table)
+            .filter(artifacts::id.eq(id))
+            .execute(conn)
+    })
+    .await?;
+
+    Ok(())
+}
+
 pub async fn list_artifacts(db: &Db) -> QueryResult<Vec<Artifact>> {
     db.run(move |conn| artifacts::table.load(conn)).await
 }

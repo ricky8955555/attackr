@@ -6,8 +6,13 @@
 
 {% block content %}
 <div class="btn-toolbar mb-3">
+  {% if user %}
   <div class="btn-group">
-    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rebuildModal">重新构建</button>
+    <button type="button" class="btn btn-outline-danger me-2" data-bs-toggle="modal" data-bs-target="#deleteModal">删除</button>
+  </div>
+  {% endif %}
+  <div class="btn-group">
+    <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#rebuildModal">重新构建</button>
   </div>
 </div>
 
@@ -45,12 +50,30 @@
   {% endfor %}
 </div>
 
-<div class="modal fade" id="rebuildModal" tabindex="-1" aria-labelledby="rebuildModalLabel" aria-hidden="true">
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="deleteModalLabel">删除</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>确定要删除产物吗？</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+        <a class="btn btn-danger" href="/admin/artifact/{{ artifact.id }}/delete">确定</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="rebuildModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <h1 class="modal-title fs-5" id="rebuildModalLabel">重新构建</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <p>确定要重新构建吗？</p>

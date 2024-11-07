@@ -162,16 +162,18 @@ async fn edit_page(
 async fn edit(jar: &CookieJar<'_>, db: Db, info: Form<Edit<'_>>) -> Result<Flash<Redirect>> {
     let user = auth_session(&db, jar).await?;
 
-    let new_user = get_user_by_username(&db, info.username.to_string())
-        .await
-        .some()
-        .flash_expect(uri!(ROOT, register_page), "查询用户信息失败")?;
+    if user.username != info.username {
+        let new_user = get_user_by_username(&db, info.username.to_string())
+            .await
+            .some()
+            .flash_expect(uri!(ROOT, register_page), "查询用户信息失败")?;
 
-    if new_user.is_some() {
-        return Err(Error::redirect(
-            uri!(ROOT, register_page),
-            &format!("用户名 {} 已被占用", info.username),
-        ));
+        if new_user.is_some() {
+            return Err(Error::redirect(
+                uri!(ROOT, register_page),
+                &format!("用户名 {} 已被占用", info.username),
+            ));
+        }
     }
 
     let new_user = User {

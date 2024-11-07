@@ -14,7 +14,8 @@ use crate::{
         Db,
     },
     functions::user::{hash_password, remove_user},
-    pages::{auth_session, Error, Result, ResultFlashExt}, utils::query::QueryResultExt,
+    pages::{auth_session, Error, Result, ResultFlashExt},
+    utils::query::QueryResultExt,
 };
 use strum::IntoEnumIterator;
 
@@ -111,16 +112,18 @@ async fn edit(
         ));
     }
 
-    let new_user = get_user_by_username(&db, info.username.to_string())
-        .await
-        .some()
-        .flash_expect(uri!(ROOT, edit_page(id)), "查询用户信息失败")?;
+    if user.username != info.username {
+        let new_user = get_user_by_username(&db, info.username.to_string())
+            .await
+            .some()
+            .flash_expect(uri!(ROOT, edit_page(id)), "查询用户信息失败")?;
 
-    if new_user.is_some() {
-        return Err(Error::redirect(
-            uri!(ROOT, edit_page(id)),
-            &format!("用户名 {} 已被占用", info.username),
-        ));
+        if new_user.is_some() {
+            return Err(Error::redirect(
+                uri!(ROOT, edit_page(id)),
+                &format!("用户名 {} 已被占用", info.username),
+            ));
+        }
     }
 
     let new_user = User {

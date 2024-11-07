@@ -16,6 +16,7 @@ use crate::{
         Db,
     },
     pages::{auth_session, Result, ResultFlashExt},
+    utils::webcolor::parse_webcolor,
 };
 
 use super::{check_permission, ResultResponseExt};
@@ -27,13 +28,14 @@ pub const ROOT: Origin<'static> = uri!("/admin/difficulty");
 struct New<'r> {
     #[field(validate = len(1..))]
     pub name: &'r str,
-    #[field(validate = len(1..))]
+    #[field(validate = try_with(|s| parse_webcolor(s)))]
     pub color: &'r str,
 }
 
 #[derive(Debug, Clone, FromForm)]
 struct Edit<'r> {
     pub name: &'r str,
+    #[field(validate = try_with(|s| parse_webcolor(s)))]
     pub color: &'r str,
 }
 
@@ -123,10 +125,7 @@ async fn edit(
             .filter(|s| !s.is_empty())
             .unwrap_or(&difficulty.name)
             .to_string(),
-        color: Some(info.color)
-            .filter(|s| !s.is_empty())
-            .unwrap_or(&difficulty.color)
-            .to_string(),
+        color: info.color.to_string(),
     };
 
     update_difficulty(&db, new_difficulty)

@@ -4,3 +4,4 @@ pub mod jinja;
 pub mod query;
 pub mod responder;
 pub mod script;
+pub mod webcolor;

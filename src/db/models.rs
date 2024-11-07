@@ -5,7 +5,7 @@ use strum::EnumIter;
 use time::PrimitiveDateTime;
 use validator::{Validate, ValidationError};
 
-use crate::core::conductor::Artifact as ArtifactInfo;
+use crate::{core::conductor::Artifact as ArtifactInfo, utils::webcolor::parse_webcolor};
 
 use super::{schema::*, types::Json};
 
@@ -97,6 +97,12 @@ pub struct Problemset {
     pub name: String,
 }
 
+fn validate_color(color: &str) -> Result<(), ValidationError> {
+    parse_webcolor(color).map_err(|_| ValidationError::new("invalid color expression."))?;
+
+    Ok(())
+}
+
 #[derive(
     Debug,
     Clone,
@@ -115,7 +121,7 @@ pub struct Difficulty {
     pub id: Option<i32>,
     #[validate(length(min = 1))]
     pub name: String,
-    #[validate(length(min = 1))]
+    #[validate(custom(function = "validate_color"))]
     pub color: String,
 }
 
@@ -150,6 +156,7 @@ pub struct Challenge {
     pub points: f64,
     pub problemset: Option<i32>,
     pub attachments: Json<Vec<String>>,
+    #[validate(length(min = 1))]
     pub flag: String,
     pub dynamic: bool,
     pub public: bool,

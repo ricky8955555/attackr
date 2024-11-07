@@ -63,6 +63,8 @@ struct Register<'r> {
 
 #[derive(Debug, Clone, FromForm, Validate)]
 struct Edit<'r> {
+    #[field(validate = with(|x| x.is_empty() || (3..=25).contains(&x.len()) && x.chars().all(|c| c.is_ascii_alphanumeric()), "invalid username"))]
+    pub username: &'r str,
     #[field(validate = with(|x| x.is_empty() || (6..).contains(&x.len()), "password too short"))]
     pub password: &'r str,
     #[field(validate = with(|x| x.is_empty() || x.contains('@'), "incorrect email"))]
@@ -160,9 +162,24 @@ async fn edit_page(
 async fn edit(jar: &CookieJar<'_>, db: Db, info: Form<Edit<'_>>) -> Result<Flash<Redirect>> {
     let user = auth_session(&db, jar).await?;
 
+    let new_user = get_user_by_username(&db, info.username.to_string())
+        .await
+        .some()
+        .flash_expect(uri!(ROOT, register_page), "查询用户信息失败")?;
+
+    if new_user.is_some() {
+        return Err(Error::redirect(
+            uri!(ROOT, register_page),
+            &format!("用户名 {} 已被占用", info.username),
+        ));
+    }
+
     let new_user = User {
         id: Some(user.id.unwrap()),
-        username: user.username,
+        username: Some(info.username)
+            .filter(|s| !s.is_empty())
+            .unwrap_or(&user.username)
+            .to_string(),
         password: Some(info.password)
             .filter(|s| !s.is_empty())
             .map(hash_password)

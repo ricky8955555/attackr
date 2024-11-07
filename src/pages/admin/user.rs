@@ -10,11 +10,11 @@ use rocket_dyn_templates::{context, Template};
 use crate::{
     db::{
         models::{User, UserRole},
-        query::user::{get_user, list_users, update_user},
+        query::user::{get_user, get_user_by_username, list_users, update_user},
         Db,
     },
     functions::user::{hash_password, remove_user},
-    pages::{auth_session, Error, Result, ResultFlashExt},
+    pages::{auth_session, Error, Result, ResultFlashExt}, utils::query::QueryResultExt,
 };
 use strum::IntoEnumIterator;
 
@@ -25,6 +25,8 @@ pub const ROOT: Origin<'static> = uri!("/admin/user");
 
 #[derive(Debug, Clone, FromForm)]
 struct UserInfo<'r> {
+    #[field(validate = with(|x| x.is_empty() || (3..=25).contains(&x.len()) && x.chars().all(|c| c.is_ascii_alphanumeric()), "invalid username"))]
+    pub username: &'r str,
     #[field(validate = with(|x| x.is_empty() || (6..).contains(&x.len()), "password too short"))]
     pub password: &'r str,
     #[field(validate = with(|x| x.is_empty() || x.contains('@'), "incorrect email"))]
@@ -109,9 +111,24 @@ async fn edit(
         ));
     }
 
+    let new_user = get_user_by_username(&db, info.username.to_string())
+        .await
+        .some()
+        .flash_expect(uri!(ROOT, edit_page(id)), "查询用户信息失败")?;
+
+    if new_user.is_some() {
+        return Err(Error::redirect(
+            uri!(ROOT, edit_page(id)),
+            &format!("用户名 {} 已被占用", info.username),
+        ));
+    }
+
     let new_user = User {
         id: Some(id),
-        username: user.username,
+        username: Some(info.username)
+            .filter(|s| !s.is_empty())
+            .unwrap_or(&user.username)
+            .to_string(),
         password: Some(info.password)
             .filter(|s| !s.is_empty())
             .map(hash_password)

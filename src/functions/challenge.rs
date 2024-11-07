@@ -56,8 +56,7 @@ static DOCKER_INSTANCES: LazyLock<RwLock<HashMap<ArtifactIndex, DockerInstance>>
 static BUILDING: LazyLock<RwLock<HashSet<(Option<i32>, i32)>>> =
     LazyLock::new(|| RwLock::new(HashSet::new()));
 
-#[allow(clippy::type_complexity)]
-static DOCKER_PREPARING: LazyLock<RwLock<HashSet<(i32, i32, usize)>>> =
+static DOCKER_PREPARING: LazyLock<RwLock<HashSet<ArtifactIndex>>> =
     LazyLock::new(|| RwLock::new(HashSet::new()));
 
 static DYNPOINTS_INSTANCE: LazyLock<Option<Mutex<KotoScript>>> = LazyLock::new(|| {

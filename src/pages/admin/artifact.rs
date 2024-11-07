@@ -121,7 +121,9 @@ async fn delete(jar: &CookieJar<'_>, db: Db, id: i32) -> Result<Flash<Redirect>>
         .await
         .flash_expect(uri!(ROOT, index), "获取产物失败")?;
 
-    _ = artifact.user.flash_expect(uri!(ROOT, detail(id)), "禁止删除静态产物")?;
+    _ = artifact
+        .user
+        .flash_expect(uri!(ROOT, detail(id)), "禁止删除静态产物")?;
 
     let cleared = clear_artifact(&artifact).await;
 

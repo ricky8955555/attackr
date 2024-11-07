@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, collections::HashMap, net::SocketAddr};
+use std::{cmp::Ordering, collections::HashMap};
 
 use itertools::Itertools;
 use rocket::{
@@ -9,7 +9,6 @@ use rocket::{
     response::{Flash, Redirect},
 };
 use rocket_dyn_templates::{context, Template};
-use serde::Serialize;
 use time::OffsetDateTime;
 
 use crate::{
@@ -29,9 +28,8 @@ use crate::{
     },
     functions::{
         challenge::{
-            build_challenge, docker_expiry, get_docker_port_bindings, is_docker_running,
-            is_publicly_available, open_attachment, open_binary, run_docker, solve_challenge,
-            stop_docker,
+            build_challenge, get_docker_instance_info, is_docker_running, is_publicly_available,
+            open_attachment, open_binary, run_docker, solve_challenge, stop_docker,
         },
         event::cmp_period,
         user::is_admin,
@@ -49,12 +47,6 @@ pub const ROOT: Origin<'static> = uri!("/challenge");
 struct Solve<'r> {
     #[field(validate = len(1..))]
     pub flag: &'r str,
-}
-
-#[derive(Debug, Clone, Serialize)]
-struct DockerInfo {
-    pub expiry: Option<u64>,
-    pub ports: Vec<(String, Vec<SocketAddr>)>,
 }
 
 #[allow(clippy::result_large_err)]
@@ -163,20 +155,17 @@ async fn detail(
         for (idx, artifact) in artifact.info.iter().enumerate() {
             if let Artifact::Docker(docker) = artifact {
                 if is_docker_running(user_id, id, idx).await {
-                    let expiry = docker_expiry(user_id, id, idx)
+                    let info = get_docker_instance_info(user_id, id, idx)
                         .await
-                        .resp_expect("获取时效信息失败")?;
+                        .resp_expect("获取 Docker 实例信息失败")?;
 
-                    let ports = get_docker_port_bindings(user_id, id, idx)
-                        .await
-                        .resp_expect("获取端口绑定信息失败")?;
-
-                    let info = DockerInfo {
-                        expiry: expiry.map(|x| x.as_secs()),
-                        ports,
-                    };
-
-                    dockers.insert(docker.id.clone(), info);
+                    dockers.insert(
+                        docker.id.clone(),
+                        context! {
+                            expiry: info.expiry.map(|x| x.as_secs()),
+                            ports: info.ports,
+                        },
+                    );
                 }
             }
         }

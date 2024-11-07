@@ -47,6 +47,12 @@ struct DockerInstance {
     stop_at: Option<Instant>,
 }
 
+#[derive(Debug, Clone)]
+pub struct DockerInstanceInfo {
+    pub expiry: Option<Duration>,
+    pub ports: Vec<(String, Vec<SocketAddr>)>,
+}
+
 type ArtifactIndex = (i32, i32, usize);
 
 static DOCKER_INSTANCES: LazyLock<RwLock<HashMap<ArtifactIndex, DockerInstance>>> =
@@ -526,23 +532,6 @@ pub async fn stop_all_active_sessions() -> bool {
     stop_all_dockers().await
 }
 
-pub async fn docker_expiry(user: i32, challenge: i32, artifact: usize) -> Result<Option<Duration>> {
-    Ok(DOCKER_INSTANCES
-        .read()
-        .await
-        .get(&(user, challenge, artifact))
-        .ok_or_else(|| anyhow!("docker instance not found."))?
-        .stop_at
-        .map(|stop_at| {
-            let now = Instant::now();
-            if now < stop_at {
-                stop_at.duration_since(now)
-            } else {
-                Duration::ZERO
-            }
-        }))
-}
-
 fn mapped_addr(addr: &MappedAddr, port: u16) -> SocketAddr {
     let port = addr
         .ports
@@ -562,16 +551,27 @@ fn mapped_addr(addr: &MappedAddr, port: u16) -> SocketAddr {
     SocketAddr::new(addr.addr, port)
 }
 
-pub async fn get_docker_port_bindings(
+pub async fn get_docker_instance_info(
     user: i32,
     challenge: i32,
     artifact: usize,
-) -> Result<Vec<(String, Vec<SocketAddr>)>> {
-    Ok(DOCKER_INSTANCES
-        .read()
-        .await
+) -> Result<DockerInstanceInfo> {
+    let instances = DOCKER_INSTANCES.read().await;
+
+    let instance = instances
         .get(&(user, challenge, artifact))
-        .ok_or_else(|| anyhow!("docker instance not found."))?
+        .ok_or_else(|| anyhow!("docker instance not found."))?;
+
+    let expiry = instance.stop_at.map(|stop_at| {
+        let now = Instant::now();
+        if now < stop_at {
+            stop_at.duration_since(now)
+        } else {
+            Duration::ZERO
+        }
+    });
+
+    let ports: Vec<_> = instance
         .info
         .ports
         .clone()
@@ -587,7 +587,9 @@ pub async fn get_docker_port_bindings(
                     .collect(),
             )
         })
-        .collect())
+        .collect();
+
+    Ok(DockerInstanceInfo { expiry, ports })
 }
 
 pub async fn open_binary(db: &Db, user: i32, challenge: i32, artifact: usize) -> Result<NamedFile> {

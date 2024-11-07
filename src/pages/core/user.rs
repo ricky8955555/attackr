@@ -17,6 +17,7 @@ use crate::{
         models::{User, UserRole},
         query::{
             challenge::list_challenges,
+            difficulty::list_difficulties,
             problemset::list_problemsets,
             solved::list_user_solved,
             user::{add_user, get_user, get_user_by_username, update_user},
@@ -108,6 +109,13 @@ async fn view(
         .map(|problemset| (problemset.id, problemset))
         .collect();
 
+    let difficulties: HashMap<_, _> = list_difficulties(&db)
+        .await
+        .resp_expect("获取题集列表失败")?
+        .into_iter()
+        .map(|difficulty| (difficulty.id, difficulty))
+        .collect();
+
     let solved: HashMap<_, _> = list_user_solved(&db, id)
         .await
         .resp_expect("获取用户解题信息失败")?
@@ -129,6 +137,7 @@ async fn view(
                 solved,
                 points,
                 problemset: problemsets.get(&challenge.problemset),
+                difficulty: difficulties.get(&challenge.difficulty),
                 challenge,
             }
         })

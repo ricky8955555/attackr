@@ -9,9 +9,9 @@ use rocket_dyn_templates::{context, Template};
 
 use crate::{
     db::{
-        models::Problemset,
-        query::problemset::{
-            add_problemset, delete_problemset, get_problemset, list_problemsets, update_problemset,
+        models::Difficulty,
+        query::difficulty::{
+            add_difficulty, delete_difficulty, get_difficulty, list_difficulties, update_difficulty,
         },
         Db,
     },
@@ -21,17 +21,20 @@ use crate::{
 use super::{check_permission, ResultResponseExt};
 
 #[allow(clippy::declare_interior_mutable_const)]
-pub const ROOT: Origin<'static> = uri!("/admin/problemset");
+pub const ROOT: Origin<'static> = uri!("/admin/difficulty");
 
 #[derive(Debug, Clone, FromForm)]
 struct New<'r> {
     #[field(validate = len(1..))]
     pub name: &'r str,
+    #[field(validate = len(1..))]
+    pub color: &'r str,
 }
 
 #[derive(Debug, Clone, FromForm)]
 struct Edit<'r> {
     pub name: &'r str,
+    pub color: &'r str,
 }
 
 #[get("/")]
@@ -39,13 +42,13 @@ async fn index(jar: &CookieJar<'_>, db: Db, flash: Option<FlashMessage<'_>>) -> 
     let current = auth_session(&db, jar).await?;
     check_permission(&current)?;
 
-    let problemsets = list_problemsets(&db)
+    let difficulties = list_difficulties(&db)
         .await
-        .resp_expect("获取题集列表失败")?;
+        .resp_expect("获取难度列表失败")?;
 
     Ok(Template::render(
-        "admin/problemset/index",
-        context! {flash, problemsets},
+        "admin/difficulty/index",
+        context! {flash, difficulties},
     ))
 }
 
@@ -58,7 +61,7 @@ async fn new_page(
     let current = auth_session(&db, jar).await?;
     check_permission(&current)?;
 
-    Ok(Template::render("admin/problemset/new", context! {flash}))
+    Ok(Template::render("admin/difficulty/new", context! {flash}))
 }
 
 #[post("/new", data = "<info>")]
@@ -66,18 +69,19 @@ async fn new(jar: &CookieJar<'_>, db: Db, info: Form<New<'_>>) -> Result<Flash<R
     let current = auth_session(&db, jar).await?;
     check_permission(&current)?;
 
-    let problemset = Problemset {
+    let difficulty = Difficulty {
         id: None,
         name: info.name.to_string(),
+        color: info.color.to_string(),
     };
 
-    add_problemset(&db, problemset)
+    add_difficulty(&db, difficulty)
         .await
-        .flash_expect(uri!(ROOT, new_page), "添加题集失败")?;
+        .flash_expect(uri!(ROOT, new_page), "添加难度失败")?;
 
     Ok(Flash::success(
         Redirect::to(uri!(ROOT, index)),
-        "添加题集成功",
+        "添加难度成功",
     ))
 }
 
@@ -91,11 +95,11 @@ async fn edit_page(
     let current = auth_session(&db, jar).await?;
     check_permission(&current)?;
 
-    let problemset = get_problemset(&db, id).await.resp_expect("获取题集失败")?;
+    let difficulty = get_difficulty(&db, id).await.resp_expect("获取难度失败")?;
 
     Ok(Template::render(
-        "admin/problemset/edit",
-        context! {flash, problemset},
+        "admin/difficulty/edit",
+        context! {flash, difficulty},
     ))
 }
 
@@ -109,25 +113,29 @@ async fn edit(
     let current = auth_session(&db, jar).await?;
     check_permission(&current)?;
 
-    let problemset = get_problemset(&db, id)
+    let difficulty = get_difficulty(&db, id)
         .await
-        .flash_expect(uri!(ROOT, index), "获取题集失败")?;
+        .flash_expect(uri!(ROOT, index), "获取难度失败")?;
 
-    let new_problemset = Problemset {
+    let new_difficulty = Difficulty {
         id: Some(id),
         name: Some(info.name)
             .filter(|s| !s.is_empty())
-            .unwrap_or(&problemset.name)
+            .unwrap_or(&difficulty.name)
+            .to_string(),
+        color: Some(info.color)
+            .filter(|s| !s.is_empty())
+            .unwrap_or(&difficulty.color)
             .to_string(),
     };
 
-    update_problemset(&db, new_problemset)
+    update_difficulty(&db, new_difficulty)
         .await
-        .flash_expect(uri!(ROOT, edit_page(id)), "修改题集信息失败")?;
+        .flash_expect(uri!(ROOT, edit_page(id)), "修改难度信息失败")?;
 
     Ok(Flash::success(
         Redirect::to(uri!(ROOT, index)),
-        "修改题集信息成功",
+        "修改难度信息成功",
     ))
 }
 
@@ -136,20 +144,20 @@ async fn delete(jar: &CookieJar<'_>, db: Db, id: i32) -> Result<Flash<Redirect>>
     let current = auth_session(&db, jar).await?;
     check_permission(&current)?;
 
-    delete_problemset(&db, id)
+    delete_difficulty(&db, id)
         .await
-        .flash_expect(uri!(ROOT, edit_page(id)), "删除题集失败")?;
+        .flash_expect(uri!(ROOT, edit_page(id)), "删除难度失败")?;
 
     Ok(Flash::success(
         Redirect::to(uri!(ROOT, index)),
-        "删除题集成功",
+        "删除难度成功",
     ))
 }
 
 pub fn stage() -> AdHoc {
     let routes = routes![index, new_page, new, edit_page, edit, delete];
 
-    AdHoc::on_ignite("Admin Pages - Problemset", |rocket| async {
+    AdHoc::on_ignite("Admin Pages - Difficulty", |rocket| async {
         rocket.mount(ROOT, routes)
     })
 }

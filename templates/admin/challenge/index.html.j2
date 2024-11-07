@@ -23,6 +23,7 @@
       <th scope="col">ID</th>
       <th scope="col">名称</th>
       <th scope="col">附属题集</th>
+      <th scope="col">难度</th>
       <th scope="col">类型</th>
       <th scope="col">初始分</th>
       <th scope="col">分数</th>
@@ -31,13 +32,23 @@
     </tr>
   </thead>
   <tbody>
-    {% for problemset, challenge in challenges %}
+    {% for info in challenges %}
+    {% set problemset = info.problemset %}
+    {% set difficulty = info.difficulty %}
+    {% set challenge = info.challenge %}
     <tr>
       <th scope="row">{{ challenge.id }}</th>
       <td>{{ challenge.name }}</td>
       <td>
         {% if problemset %}
         {{ problemset.name }}
+        {% else %}
+        none
+        {% endif %}
+      </td>
+      <td>
+        {% if difficulty %}
+        <span style="color: {{ difficulty.color }}">{{ difficulty.name }}</span>
         {% else %}
         none
         {% endif %}

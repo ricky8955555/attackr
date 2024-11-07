@@ -1,5 +1,6 @@
 pub mod artifact;
 pub mod challenge;
+pub mod difficulty;
 pub mod problemset;
 pub mod root;
 pub mod submission;
@@ -65,6 +66,7 @@ pub fn stage() -> AdHoc {
         rocket
             .attach(artifact::stage())
             .attach(challenge::stage())
+            .attach(difficulty::stage())
             .attach(problemset::stage())
             .attach(root::stage())
             .attach(submission::stage())

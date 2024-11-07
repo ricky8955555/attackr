@@ -36,6 +36,7 @@
       <thead>
         <tr>
           <th scope="col">题集</th>
+          <th scope="col">难度</th>
           <th scope="col">名称</th>
           <th scope="col">状态</th>
           <th scope="col">分数</th>
@@ -43,8 +44,9 @@
         </tr>
       </thead>
       <tbody>
-        {% for info in progress | sort(attribute="problemset") %}
+        {% for info in progress | sort(attribute="difficulty") | sort(attribute="problemset") %}
         {% set problemset = info.problemset %}
+        {% set difficulty = info.difficulty %}
         {% set solved = info.solved %}
         {% set challenge = info.challenge %}
         <tr>
@@ -55,15 +57,20 @@
             (未分类)
             {% endif %}
           </td>
+          <td>
+            {% if difficulty %}
+            <span style="color: {{ difficulty.color }}">{{ difficulty.name }}</span>
+            {% else %}
+            神秘难度
+            {% endif %}
+          </td>
           <td>{{ challenge.name }}</td>
           <td>
             {% from "core/components/progress" import show_progress %}
             {{ show_progress(solved is not none) }}
           </td>
           <td>
-            <span>
-              {{ display_points(info.points) }}
-            </span>
+            <span>{{ display_points(info.points) }}</span>
             <span>/</span>
             <span>{{ display_points(challenge.points) }}</span>
           </td>

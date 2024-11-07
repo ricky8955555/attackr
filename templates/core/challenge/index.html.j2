@@ -23,12 +23,18 @@
     {% set challenge = info.challenge %}
     {% set solved = info.solved %}
     {% set user_solved = info.user_solved %}
+    {% set difficulty = info.difficulty %}
     <div class="col mb-3">
       <div class="card h-100">
         <div class="card-body{% if not challenge.public %} bg-secondary-subtle{% endif %}">
           {% from "core/components/progress" import show_progress %}
           <p class="card-text">{{ show_progress(user_solved is not none) }}</p>
-          <h5 class="card-title">{{ challenge.name }}</h5>
+          <h5 class="card-title">
+            {% if difficulty %}
+            <span class="fw-bold" style="color: {{ difficulty.color }}">[{{ difficulty.name }}]</span>
+            {% endif %}
+            {{ challenge.name }}
+          </h5>
           <h6 class="card-subtitle mb-3 text-body-secondary">
             <span>{{ display_points(info.points) }}</span>
             <span>/</span>

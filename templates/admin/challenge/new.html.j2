@@ -31,6 +31,19 @@
       {% endfor %}
     </select>
   </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">难度</span>
+    <select name="difficulty" class="form-select">
+      <option value="" selected>
+        none
+      </option>
+      {% for difficulty in difficulties %}
+      <option value="{{ difficulty.id }}">
+        {{ difficulty.id }} - {{ difficulty.name }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
   <div class="form-check mb-3">
     <input class="form-check-input" type="checkbox" name="dynamic" id="dynamicCheckbox" value="true">
     <label class="form-check-label">动态题目</label>

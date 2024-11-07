@@ -22,6 +22,15 @@ diesel::table! {
         flag -> Text,
         dynamic -> Bool,
         public -> Bool,
+        difficulty -> Nullable<Integer>,
+    }
+}
+
+diesel::table! {
+    difficulties (id) {
+        id -> Nullable<Integer>,
+        name -> Text,
+        color -> Text,
     }
 }
 
@@ -78,6 +87,7 @@ diesel::table! {
 
 diesel::joinable!(artifacts -> challenges (challenge));
 diesel::joinable!(artifacts -> users (user));
+diesel::joinable!(challenges -> difficulties (difficulty));
 diesel::joinable!(challenges -> problemsets (problemset));
 diesel::joinable!(scores -> challenges (challenge));
 diesel::joinable!(scores -> users (user));
@@ -89,6 +99,7 @@ diesel::joinable!(submissions -> users (user));
 diesel::allow_tables_to_appear_in_same_query!(
     artifacts,
     challenges,
+    difficulties,
     problemsets,
     scores,
     solved,

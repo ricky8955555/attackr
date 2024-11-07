@@ -1,0 +1,38 @@
+{% extends "admin/base" %}
+
+{% block header %}
+<h1 class="mt-5 text-center">难度列表</h1>
+{% endblock %}
+
+{% block content %}
+<div class="btn-toolbar mb-3 justify-content-end">
+  <div class="btn-group">
+    <a href="/admin/difficulty/new" class="btn btn-outline-primary">添加</a>
+  </div>
+</div>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">ID</th>
+      <th scope="col">名称</th>
+      <th scope="col">颜色</th>
+      <th scope="col">操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for difficulty in difficulties %}
+    <tr>
+      <th scope="row">{{ difficulty.id }}</th>
+      <td>{{ difficulty.name }}</td>
+      <td style="color: {{ difficulty.color }}">{{ difficulty.color }}</td>
+      <td>
+        <a title="编辑" href="/admin/difficulty/{{ difficulty.id }}" class="text-decoration-none">
+          <img src="/static/icons/pen-to-square-regular.svg" height="20">
+        </a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

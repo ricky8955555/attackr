@@ -1,0 +1,19 @@
+{% extends "admin/base" %}
+
+{% block header %}
+<h1 class="mt-5 text-center">添加难度</h1>
+{% endblock %}
+
+{% block content %}
+<form method="post">
+  <div class="input-group mb-3">
+    <span class="input-group-text">名称</span>
+    <input type="text" name="name" class="form-control" placeholder="名称" required>
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">颜色</span>
+    <input type="color" name="color" class="form-control form-control-color">
+  </div>
+  <button type="submit" class="btn btn-outline-primary mb-3">添加</button>
+</form>
+{% endblock %}

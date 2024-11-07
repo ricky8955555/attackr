@@ -21,10 +21,9 @@
 <div class="ps-3 py-2 mb-5 border-3 border-start border-info rounded">
   <h1>
     {% if problemset %}
-    {{ problemset.name }} - {{ challenge.name }}
-    {% else %}
-    {{ challenge.name }}
+    <span class="fw-bold">[{{ problemset.name }}]</span>
     {% endif %}
+    <span {% if difficulty %}style="color: {{ difficulty.color }}"{% endif %}>{{ challenge.name }}</span>
   </h1>
   <h6 class="text-secondary mb-4">
     {% from 'functions/points' import display as display_points %}

@@ -18,6 +18,7 @@ use crate::{
                 add_challenge, delete_challenge, get_challenge, list_challenges,
                 list_private_challenges, publish_challenge, update_challenge,
             },
+            difficulty::list_difficulties,
             problemset::list_problemsets,
         },
         Db,
@@ -42,6 +43,7 @@ struct Edit<'r> {
     #[field(validate = with(|x| x.map(|v| v >= 1.0).unwrap_or(true), "points too low."))]
     pub points: Option<f64>,
     pub public: bool,
+    pub difficulty: Option<i32>,
 }
 
 #[derive(Debug, FromForm)]
@@ -57,6 +59,7 @@ struct New<'r> {
     pub dynamic: bool,
     pub flag: &'r str,
     pub public: bool,
+    pub difficulty: Option<i32>,
 }
 
 #[derive(Debug, FromForm)]
@@ -73,14 +76,27 @@ async fn index(jar: &CookieJar<'_>, db: Db, flash: Option<FlashMessage<'_>>) -> 
         .await
         .resp_expect("获取题集列表失败")?
         .into_iter()
-        .map(|problemset| (problemset.id.unwrap(), problemset))
+        .map(|problemset| (problemset.id, problemset))
+        .collect();
+
+    let difficulties: HashMap<_, _> = list_difficulties(&db)
+        .await
+        .resp_expect("获取难度列表失败")?
+        .into_iter()
+        .map(|difficulty| (difficulty.id, difficulty))
         .collect();
 
     let challenges: Vec<_> = list_challenges(&db)
         .await
         .resp_expect("获取题目列表失败")?
         .into_iter()
-        .map(|x| (x.problemset.as_ref().and_then(|id| problemsets.get(id)), x))
+        .map(|challenge| {
+            context! {
+                problemset: problemsets.get(&challenge.problemset),
+                difficulty: difficulties.get(&challenge.difficulty),
+                challenge,
+            }
+        })
         .collect();
 
     Ok(Template::render(
@@ -102,14 +118,27 @@ async fn publish_page(
         .await
         .resp_expect("获取题集列表失败")?
         .into_iter()
-        .map(|problemset| (problemset.id.unwrap(), problemset))
+        .map(|problemset| (problemset.id, problemset))
+        .collect();
+
+    let difficulties: HashMap<_, _> = list_difficulties(&db)
+        .await
+        .resp_expect("获取难度列表失败")?
+        .into_iter()
+        .map(|difficulty| (difficulty.id, difficulty))
         .collect();
 
     let challenges: Vec<_> = list_private_challenges(&db)
         .await
         .resp_expect("获取题目列表失败")?
         .into_iter()
-        .map(|x| (x.problemset.as_ref().and_then(|id| problemsets.get(id)), x))
+        .map(|challenge| {
+            context! {
+                problemset: problemsets.get(&challenge.problemset),
+                difficulty: difficulties.get(&challenge.difficulty),
+                challenge,
+            }
+        })
         .collect();
 
     Ok(Template::render(
@@ -148,9 +177,13 @@ async fn new_page(
         .await
         .resp_expect("获取题集列表失败")?;
 
+    let difficulties = list_difficulties(&db)
+        .await
+        .resp_expect("获取难度列表失败")?;
+
     Ok(Template::render(
         "admin/challenge/new",
-        context! {flash, problemsets},
+        context! {flash, problemsets, difficulties},
     ))
 }
 
@@ -192,6 +225,7 @@ async fn new(jar: &CookieJar<'_>, db: Db, mut info: Form<New<'_>>) -> Result<Fla
         initial: info.points,
         points: info.points,
         public: info.public,
+        difficulty: info.difficulty,
     };
 
     let challenge = add_challenge(&db, challenge)
@@ -230,9 +264,13 @@ async fn edit_page(
         .await
         .resp_expect("获取题集列表失败")?;
 
+    let difficulties = list_difficulties(&db)
+        .await
+        .resp_expect("获取难度列表失败")?;
+
     Ok(Template::render(
         "admin/challenge/edit",
-        context! {flash, challenge, problemsets},
+        context! {flash, challenge, problemsets, difficulties},
     ))
 }
 
@@ -268,6 +306,7 @@ async fn edit(
         initial: points,
         points: challenge.points,
         public: info.public,
+        difficulty: info.difficulty,
     };
 
     update_challenge(&db, new_challenge)

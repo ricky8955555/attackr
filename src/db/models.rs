@@ -104,6 +104,28 @@ pub struct Problemset {
     Deserialize,
     Insertable,
     Queryable,
+    Identifiable,
+    Selectable,
+    AsChangeset,
+    Validate,
+)]
+#[serde(crate = "rocket::serde")]
+#[diesel(table_name = difficulties)]
+pub struct Difficulty {
+    pub id: Option<i32>,
+    #[validate(length(min = 1))]
+    pub name: String,
+    #[validate(length(min = 1))]
+    pub color: String,
+}
+
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    Insertable,
+    Queryable,
     Associations,
     Identifiable,
     Selectable,
@@ -112,6 +134,7 @@ pub struct Problemset {
 )]
 #[serde(crate = "rocket::serde")]
 #[diesel(belongs_to(Problemset, foreign_key = problemset))]
+#[diesel(belongs_to(Difficulty, foreign_key = difficulty))]
 #[diesel(table_name = challenges)]
 #[diesel(treat_none_as_null = true)]
 pub struct Challenge {
@@ -130,6 +153,7 @@ pub struct Challenge {
     pub flag: String,
     pub dynamic: bool,
     pub public: bool,
+    pub difficulty: Option<i32>,
 }
 
 #[derive(

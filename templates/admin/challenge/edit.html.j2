@@ -23,12 +23,25 @@
   <div class="input-group mb-3">
     <span class="input-group-text">附属题集</span>
     <select name="problemset" class="form-select">
-      <option value="" {% if challenge.problemset %}selected{% endif %}>
+      <option value="" {% if not challenge.problemset %}selected{% endif %}>
         none
       </option>
       {% for problemset in problemsets %}
-      <option value="{{ problemset.id }}" {% if problemset.id==challenge.problemset %}selected{% endif %}>
+      <option value="{{ problemset.id }}" {% if problemset.id == challenge.problemset %}selected{% endif %}>
         {{ problemset.id }} - {{ problemset.name }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">难度</span>
+    <select name="difficulty" class="form-select">
+      <option value="" {% if not challenge.difficulty %}selected{% endif %}>
+        none
+      </option>
+      {% for difficulty in difficulties %}
+      <option value="{{ difficulty.id }}" {% if difficulty.id == challenge.difficulty %}selected{% endif %}>
+        {{ difficulty.id }} - {{ difficulty.name }}
       </option>
       {% endfor %}
     </select>

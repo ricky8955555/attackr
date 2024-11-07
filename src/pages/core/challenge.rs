@@ -18,7 +18,8 @@ use crate::{
         query::{
             artifact::get_artifact,
             challenge::{get_challenge, list_challenges},
-            problemset::list_problemsets,
+            difficulty::{get_difficulty, list_difficulties},
+            problemset::{get_problemset, list_problemsets},
             solved::{
                 count_challenge_effective_solved, get_solved, list_effective_solved,
                 list_user_solved,
@@ -91,6 +92,13 @@ async fn index(jar: &CookieJar<'_>, db: Db, flash: Option<FlashMessage<'_>>) -> 
         .map(|problemset| (problemset.id, problemset))
         .collect();
 
+    let difficulties: HashMap<_, _> = list_difficulties(&db)
+        .await
+        .resp_expect("获取难度列表失败")?
+        .into_iter()
+        .map(|difficulty| (difficulty.id, difficulty))
+        .collect();
+
     let info: Vec<_> = list_challenges(&db)
         .await
         .resp_expect("获取题目列表失败")?
@@ -106,6 +114,7 @@ async fn index(jar: &CookieJar<'_>, db: Db, flash: Option<FlashMessage<'_>>) -> 
 
             context! {
                 problemset: problemsets.get(&challenge.problemset),
+                difficulty: difficulties.get(&challenge.difficulty),
                 solved,
                 user_solved,
                 points,
@@ -134,6 +143,24 @@ async fn detail(
 
     let challenge = get_challenge(&db, id).await.resp_expect("获取题目失败")?;
     check_challenge_availability(&user, &challenge)?;
+
+    let problemset = match challenge.problemset {
+        Some(problemset) => Some(
+            get_problemset(&db, problemset)
+                .await
+                .resp_expect("获取题集失败")?,
+        ),
+        None => None,
+    };
+
+    let difficulty = match challenge.difficulty {
+        Some(difficulty) => Some(
+            get_difficulty(&db, difficulty)
+                .await
+                .resp_expect("获取题集失败")?,
+        ),
+        None => None,
+    };
 
     let solved_count = count_challenge_effective_solved(&db, id)
         .await
@@ -173,7 +200,7 @@ async fn detail(
 
     Ok(Template::render(
         "core/challenge/detail",
-        context! {flash, challenge, solved, solved_count, artifact, dockers},
+        context! {flash, challenge, problemset, difficulty, solved, solved_count, artifact, dockers},
     ))
 }
 

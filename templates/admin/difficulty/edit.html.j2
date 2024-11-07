@@ -1,0 +1,41 @@
+{% extends "admin/base" %}
+
+{% block header %}
+<h1 class="mt-5 text-center">修改难度信息</h1>
+{% endblock %}
+
+{% block content %}
+<form method="post">
+  <div class="input-group mb-3">
+    <span class="input-group-text">名称</span>
+    <input type="text" name="name" class="form-control" placeholder="名称 (置空不修改)" value="{{ difficulty.name }}">
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text">颜色</span>
+    <input type="color" name="color" class="form-control form-control-color" value="{{ difficulty.color }}">
+  </div>
+  <button type="submit" class="btn btn-outline-primary">修改</button>
+  <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">删除</button>
+</form>
+
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="deleteModalLabel">删除难度</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        确定删除吗？
+      </div>
+      <div class="modal-footer">
+        <form method="post">
+          <input type="hidden" name="_method" value="delete">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="submit" class="btn btn-danger">删除</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

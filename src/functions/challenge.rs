@@ -28,7 +28,7 @@ use crate::{
                 update_artifact,
             },
             challenge::{delete_challenge, get_challenge, list_challenges, update_challenge},
-            scores::add_score,
+            score::add_score,
             solved::{list_challenge_effective_solved_with_submission, update_solved},
             submission::add_submission,
         },

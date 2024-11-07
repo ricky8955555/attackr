@@ -14,7 +14,7 @@ use crate::{
         query::{
             challenge::{list_challenges, list_problemset_challenges},
             problemset::list_problemsets,
-            scores::{list_problemset_scores, list_scores},
+            score::{list_problemset_scores, list_scores},
             solved::list_effective_solved,
             user::list_active_challengers,
         },

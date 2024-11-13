@@ -80,6 +80,7 @@ static ACCESS_TOKEN_PUBKEY: LazyLock<DecodingKey> = LazyLock::new(|| match &CONF
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct AccessToken {
     id: i32,
+    random: String,
     exp: u64,
 }
 
@@ -95,6 +96,7 @@ fn create_token(user: &User) -> Result<String> {
 
     let claim = AccessToken {
         id: user.id.unwrap(),
+        random: user.random.clone(),
         exp,
     };
 
@@ -115,23 +117,27 @@ pub fn destroy_session(jar: &CookieJar<'_>) {
     jar.remove("token");
 }
 
-fn verify_token(token: &str) -> Result<i32> {
+fn verify_token(token: &str) -> Result<AccessToken> {
     let token = decode::<AccessToken>(
         token,
         &ACCESS_TOKEN_PUBKEY,
         &Validation::new(CONFIG.jwt.algo),
     )?;
 
-    Ok(token.claims.id)
+    Ok(token.claims)
 }
 
 pub async fn auth_session(db: &Db, jar: &CookieJar<'_>) -> Result<User> {
-    let token = jar.get("token").ok_or(anyhow!("unauthorized session."))?;
-    let id = verify_token(token.value())?;
-    let user = get_user(db, id).await?;
+    let jwt = jar.get("token").ok_or(anyhow!("unauthorized session."))?;
+    let token = verify_token(jwt.value())?;
+    let user = get_user(db, token.id).await?;
 
     if !user.enabled {
         bail!("disabled user.");
+    }
+
+    if token.random != user.random {
+        bail!("random not matched.");
     }
 
     Ok(user)
@@ -143,6 +149,10 @@ pub fn hash_password(password: &str) -> String {
 
 pub fn verify_password(password: &str, hash: &str) -> Result<bool> {
     Ok(verify(password, hash)?)
+}
+
+pub fn generate_random() -> String {
+    uuid::Uuid::new_v4().as_simple().to_string()
 }
 
 pub async fn remove_user(db: &Db, id: i32) -> Result<()> {
@@ -179,6 +189,7 @@ pub async fn initialize_superuser(rocket: Rocket<Build>) -> Rocket<Build> {
             enabled: true,
             role: UserRole::Superuser,
             nickname: None,
+            random: generate_random(),
         };
 
         add_user(&db, user).await.expect("failed to add superuser.");

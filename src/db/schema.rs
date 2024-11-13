@@ -64,6 +64,7 @@ diesel::table! {
         enabled -> Bool,
         role -> UserRoleMapping,
         nickname -> Nullable<Text>,
+        random -> Text,
     }
 }
 

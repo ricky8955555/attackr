@@ -13,7 +13,7 @@ use crate::{
         query::user::{get_user, get_user_by_username, list_users, update_user},
         Db,
     },
-    functions::user::{hash_password, remove_user},
+    functions::user::{generate_random, hash_password, remove_user},
     pages::{auth_session, Error, Result, ResultFlashExt},
     utils::query::QueryResultExt,
 };
@@ -150,6 +150,11 @@ async fn edit(
         nickname: Some(info.nickname)
             .filter(|s| !s.is_empty())
             .map(|s| s.to_string()),
+        random: info
+            .password
+            .is_empty()
+            .then(|| user.random.to_string())
+            .unwrap_or_else(generate_random),
     };
 
     update_user(&db, new_user)

@@ -27,8 +27,8 @@ use crate::{
     functions::{
         challenge::is_publicly_available,
         user::{
-            auth_session as functional_auth_session, destroy_session, hash_password, new_session,
-            verify_password,
+            auth_session as functional_auth_session, destroy_session, generate_random,
+            hash_password, new_session, verify_password,
         },
     },
     pages::{auth_session, Error, Result, ResultFlashExt},
@@ -209,6 +209,11 @@ async fn edit(jar: &CookieJar<'_>, db: Db, info: Form<Edit<'_>>) -> Result<Flash
         nickname: Some(info.nickname)
             .filter(|s| !s.is_empty())
             .map(|s| s.to_string()),
+        random: info
+            .password
+            .is_empty()
+            .then(|| user.random.to_string())
+            .unwrap_or_else(generate_random),
     };
 
     update_user(&db, new_user)
@@ -275,6 +280,7 @@ async fn register(db: Db, info: Form<Register<'_>>) -> Result<Flash<Redirect>> {
         nickname: Some(info.nickname)
             .filter(|s| !s.is_empty())
             .map(|s| s.to_string()),
+        random: generate_random(),
     };
 
     add_user(&db, user)

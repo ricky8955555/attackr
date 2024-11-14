@@ -151,7 +151,8 @@ async fn edit(
         nickname: Some(info.nickname)
             .filter(|s| !s.is_empty())
             .map(|s| s.to_string()),
-        random: info.random
+        random: info
+            .random
             .then(generate_random)
             .unwrap_or_else(|| user.random.to_string()),
     };

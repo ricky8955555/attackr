@@ -37,6 +37,7 @@ struct UserInfo<'r> {
     pub nickname: &'r str,
     pub enabled: bool,
     pub role: UserRole,
+    pub random: bool,
 }
 
 #[get("/")]
@@ -150,11 +151,9 @@ async fn edit(
         nickname: Some(info.nickname)
             .filter(|s| !s.is_empty())
             .map(|s| s.to_string()),
-        random: info
-            .password
-            .is_empty()
-            .then(|| user.random.to_string())
-            .unwrap_or_else(generate_random),
+        random: info.random
+            .then(generate_random)
+            .unwrap_or_else(|| user.random.to_string()),
     };
 
     update_user(&db, new_user)

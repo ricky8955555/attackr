@@ -75,7 +75,7 @@ pub struct User {
     pub role: UserRole,
     #[validate(length(min = 1, max = 60))]
     pub nickname: Option<String>,
-    #[validate(length(min = 1))]
+    #[serde(skip_serializing)]
     pub random: String,
 }
 

@@ -137,7 +137,7 @@ pub async fn auth_session(db: &Db, jar: &CookieJar<'_>) -> Result<User> {
     }
 
     if token.random != user.random {
-        bail!("random not matched.");
+        bail!("random not match.");
     }
 
     Ok(user)

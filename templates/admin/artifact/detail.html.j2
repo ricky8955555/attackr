@@ -61,8 +61,11 @@
         <p>确定要删除产物吗？</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
-        <a class="btn btn-danger" href="/admin/artifact/{{ artifact.id }}/delete">确定</a>
+        <form action="/admin/artifact/{{ artifact.id }}" method="post">
+          <input type="hidden" name="_method" value="delete">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="submit" class="btn btn-danger">删除</button>
+        </form>
       </div>
     </div>
   </div>

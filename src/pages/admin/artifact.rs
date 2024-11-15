@@ -112,7 +112,7 @@ async fn rebuild(jar: &CookieJar<'_>, db: Db, id: i32) -> Result<Flash<Redirect>
     ))
 }
 
-#[get("/<id>/delete")]
+#[delete("/<id>")]
 async fn delete(jar: &CookieJar<'_>, db: Db, id: i32) -> Result<Flash<Redirect>> {
     let current = auth_session(&db, jar).await?;
     check_permission(&current)?;

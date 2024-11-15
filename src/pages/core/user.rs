@@ -185,6 +185,8 @@ async fn edit(jar: &CookieJar<'_>, db: Db, info: Form<Edit<'_>>) -> Result<Flash
         }
     }
 
+    let new_password = !info.password.is_empty();
+
     let new_user = User {
         id: Some(user.id.unwrap()),
         username: Some(info.username)
@@ -209,21 +211,26 @@ async fn edit(jar: &CookieJar<'_>, db: Db, info: Form<Edit<'_>>) -> Result<Flash
         nickname: Some(info.nickname)
             .filter(|s| !s.is_empty())
             .map(|s| s.to_string()),
-        random: info
-            .password
-            .is_empty()
-            .then(|| user.random.to_string())
-            .unwrap_or_else(generate_random),
+        random: new_password
+            .then(generate_random)
+            .unwrap_or_else(|| user.random.to_string()),
     };
 
     update_user(&db, new_user)
         .await
         .flash_expect(uri!(ROOT, edit_page), "修改信息失败")?;
 
-    Ok(Flash::success(
-        Redirect::to(uri!(ROOT, index)),
-        "修改信息成功",
-    ))
+    if new_password {
+        Ok(Flash::success(
+            Redirect::to(uri!(ROOT, login_page)),
+            "修改信息成功，修改密码后需重新登录",
+        ))
+    } else {
+        Ok(Flash::success(
+            Redirect::to(uri!(ROOT, index)),
+            "修改信息成功",
+        ))
+    }
 }
 
 #[get("/login")]

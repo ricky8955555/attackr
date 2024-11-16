@@ -1,5 +1,5 @@
-challenge_root: /path/to/challenges
-artifact_root: /path/to/artifacts
+challenge_root: /path/to/challenges  # 题目存储路径
+artifact_root: /path/to/artifacts  # 产物存储路径
 
 docker:
   expiry:  # Docker 容器自动销毁时间

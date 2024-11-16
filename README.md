@@ -8,6 +8,7 @@ attackr 是使用 [Rust](https://www.rust-lang.org) + [Rocket](https://rocket.rs
 
 ## 局限性
 
+- 仅支持在单个实例进行单个比赛
 - 使用 SQLite 数据库，不适合大并发场景
 - 只支持控制本机 Docker，无法实现多设备 Docker 负载平衡
 - 不支持二进制产物及附件的内容分发

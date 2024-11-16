@@ -125,7 +125,7 @@ pub struct DockerRunOptions {
     #[serde(default)]
     pub storage: Option<String>,
     #[serde(default = "default_addrs")]
-    addrs: Vec<IpAddr>,
+    pub addrs: Vec<IpAddr>,
     #[serde(default)]
     pub ports: Option<RangeInclusive<u16>>,
 }

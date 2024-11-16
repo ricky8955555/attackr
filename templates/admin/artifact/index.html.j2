@@ -5,35 +5,37 @@
 {% endblock %}
 
 {% block content %}
-<table class="table mb-5">
-  <thead>
-    <tr>
-      <th scope="col">ID</th>
-      <th scope="col">用户</th>
-      <th scope="col">题目</th>
-      <th scope="col">操作</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for data in artifacts %}
-    {% set artifact = data.artifact %}
-    <tr>
-      <th scope="row">{{ artifact.id }}</th>
-      <td>
-        {% if data.user %}
-        {{ data.user.username }}
-        {% else %}
-        (静态产物)
-        {% endif %}
-      </td>
-      <td>{{ data.challenge.name }}</td>
-      <td>
-        <a title="详情" href="/admin/artifact/{{ artifact.id }}/detail" class="text-decoration-none me-2">
-          <img src="/static/icons/eye-solid.svg" height="20">
-        </a>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="table-responsive click-scroll mb-5" data-overlayscrollbars-initialize>
+  <table class="table" style="white-space: nowrap;">
+    <thead>
+      <tr>
+        <th scope="col">ID</th>
+        <th scope="col">用户</th>
+        <th scope="col">题目</th>
+        <th scope="col">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for data in artifacts %}
+      {% set artifact = data.artifact %}
+      <tr>
+        <th scope="row">{{ artifact.id }}</th>
+        <td>
+          {% if data.user %}
+          {{ data.user.username }}
+          {% else %}
+          (静态产物)
+          {% endif %}
+        </td>
+        <td>{{ data.challenge.name }}</td>
+        <td>
+          <a title="详情" href="/admin/artifact/{{ artifact.id }}/detail" class="text-decoration-none me-2">
+            <img src="/static/icons/eye-solid.svg" height="20">
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% endblock %}

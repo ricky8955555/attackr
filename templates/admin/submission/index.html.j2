@@ -50,30 +50,32 @@
   </div>
 </div>
 
-<table class="table mb-5">
-  <thead>
-    <tr>
-      <th scope="col">ID</th>
-      <th scope="col">用户名</th>
-      <th scope="col">题目</th>
-      <th scope="col">提交 Flag</th>
-      <th scope="col">提交时间</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for data in submissions | reverse %}
-    {% set submission = data.submission %}
-    <tr>
-      <th scope="row">{{ submission.id }}</th>
-      <td>{{ data.user.username }}</td>
-      <td>{{ data.challenge.name }}</td>
-      <td>{{ submission.flag }}</td>
-      <td>
-        {% from "functions/time" import display as display_time %}
-        {{ display_time(submission.time) }}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="table-responsive click-scroll mb-5" data-overlayscrollbars-initialize>
+  <table class="table" style="white-space: nowrap;">
+    <thead>
+      <tr>
+        <th scope="col">ID</th>
+        <th scope="col">用户名</th>
+        <th scope="col">题目</th>
+        <th scope="col">提交 Flag</th>
+        <th scope="col">提交时间</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for data in submissions | reverse %}
+      {% set submission = data.submission %}
+      <tr>
+        <th scope="row">{{ submission.id }}</th>
+        <td>{{ data.user.username }}</td>
+        <td>{{ data.challenge.name }}</td>
+        <td>{{ submission.flag }}</td>
+        <td>
+          {% from "functions/time" import display as display_time %}
+          {{ display_time(submission.time) }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% endblock %}

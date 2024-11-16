@@ -11,28 +11,30 @@
   </div>
 </div>
 
-<table class="table">
-  <thead>
-    <tr>
-      <th scope="col">ID</th>
-      <th scope="col">名称</th>
-      <th scope="col">颜色</th>
-      <th scope="col">操作</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for difficulty in difficulties %}
-    <tr>
-      <th scope="row">{{ difficulty.id }}</th>
-      <td>{{ difficulty.name }}</td>
-      <td style="color: {{ difficulty.color }}">{{ difficulty.color }}</td>
-      <td>
-        <a title="编辑" href="/admin/difficulty/{{ difficulty.id }}" class="text-decoration-none">
-          <img src="/static/icons/pen-to-square-regular.svg" height="20">
-        </a>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="table-responsive click-scroll" data-overlayscrollbars-initialize>
+  <table class="table" style="white-space: nowrap;">
+    <thead>
+      <tr>
+        <th scope="col">ID</th>
+        <th scope="col">名称</th>
+        <th scope="col">颜色</th>
+        <th scope="col">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for difficulty in difficulties %}
+      <tr>
+        <th scope="row">{{ difficulty.id }}</th>
+        <td>{{ difficulty.name }}</td>
+        <td style="color: {{ difficulty.color }}">{{ difficulty.color }}</td>
+        <td>
+          <a title="编辑" href="/admin/difficulty/{{ difficulty.id }}" class="text-decoration-none">
+            <img src="/static/icons/pen-to-square-regular.svg" height="20">
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% endblock %}

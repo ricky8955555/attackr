@@ -32,89 +32,93 @@
   </div>
   <div class="col mb-3">
     <h5 class="mb-3">解题状态</h5>
-    <table class="table">
-      <thead>
-        <tr>
-          <th scope="col">题集</th>
-          <th scope="col">难度</th>
-          <th scope="col">名称</th>
-          <th scope="col">状态</th>
-          <th scope="col">分数</th>
-          <th scope="col">解题时间</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for info in progress | sort(attribute="difficulty") | sort(attribute="problemset") %}
-        {% set problemset = info.problemset %}
-        {% set difficulty = info.difficulty %}
-        {% set solved = info.solved %}
-        {% set challenge = info.challenge %}
-        <tr>
-          <td>
-            {% if problemset %}
-            {{ problemset.name }}
-            {% else %}
-            (未分类)
-            {% endif %}
-          </td>
-          <td>
-            {% if difficulty %}
-            <span style="color: {{ difficulty.color }}">{{ difficulty.name }}</span>
-            {% else %}
-            神秘难度
-            {% endif %}
-          </td>
-          <td>{{ challenge.name }}</td>
-          <td>
-            {% from "core/components/progress" import show_progress %}
-            {{ show_progress(solved is not none) }}
-          </td>
-          <td>
-            <span>{{ display_points(info.points) }}</span>
-            <span>/</span>
-            <span>{{ display_points(challenge.points) }}</span>
-          </td>
-          <td>
-            {% if solved %}
-            {% from "functions/time" import display as display_time %}
-            {{ display_time(solved.time) }}
-            {% else %}
-            未解出
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <table class="table">
-      <thead>
-        <tr>
-          <th scope="col">题集</th>
-          <th scope="col">解题数</th>
-          <th scope="col">分数</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for problemset, progress in progress | groupby("problemset") | sort %}
-        {% set solved = progress | map(attribute="solved") | select %}
-        <tr>
-          <td>
-            {% if problemset %}
-            {{ problemset.name }}
-            {% else %}
-            (未分类)
-            {% endif %}
-          </td>
-          <td>{{ solved | length }} / {{ progress | length }}</td>
-          <td>
-            {% set got = progress | map(attribute="points") | sumint %}
-            {% set total = progress | map(attribute="challenge") | map(attribute="points") | sumint %}
-            {{ display_points(got) }} / {{ display_points(total) }} ({{ (got / total * 100) | round(2) }} %)
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="table-responsive click-scroll" data-overlayscrollbars-initialize>
+      <table class="table" style="white-space: nowrap;">
+        <thead>
+          <tr>
+            <th scope="col">题集</th>
+            <th scope="col">难度</th>
+            <th scope="col">名称</th>
+            <th scope="col">状态</th>
+            <th scope="col">分数</th>
+            <th scope="col">解题时间</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for info in progress | sort(attribute="difficulty") | sort(attribute="problemset") %}
+          {% set problemset = info.problemset %}
+          {% set difficulty = info.difficulty %}
+          {% set solved = info.solved %}
+          {% set challenge = info.challenge %}
+          <tr>
+            <td>
+              {% if problemset %}
+              {{ problemset.name }}
+              {% else %}
+              (未分类)
+              {% endif %}
+            </td>
+            <td>
+              {% if difficulty %}
+              <span style="color: {{ difficulty.color }}">{{ difficulty.name }}</span>
+              {% else %}
+              神秘难度
+              {% endif %}
+            </td>
+            <td>{{ challenge.name }}</td>
+            <td>
+              {% from "core/components/progress" import show_progress %}
+              {{ show_progress(solved is not none) }}
+            </td>
+            <td>
+              <span>{{ display_points(info.points) }}</span>
+              <span>/</span>
+              <span>{{ display_points(challenge.points) }}</span>
+            </td>
+            <td>
+              {% if solved %}
+              {% from "functions/time" import display as display_time %}
+              {{ display_time(solved.time) }}
+              {% else %}
+              未解出
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="table-responsive click-scroll" data-overlayscrollbars-initialize>
+      <table class="table" style="white-space: nowrap;">
+        <thead>
+          <tr>
+            <th scope="col">题集</th>
+            <th scope="col">解题数</th>
+            <th scope="col">分数</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for problemset, progress in progress | groupby("problemset") | sort %}
+          {% set solved = progress | map(attribute="solved") | select %}
+          <tr>
+            <td>
+              {% if problemset %}
+              {{ problemset.name }}
+              {% else %}
+              (未分类)
+              {% endif %}
+            </td>
+            <td>{{ solved | length }} / {{ progress | length }}</td>
+            <td>
+              {% set got = progress | map(attribute="points") | sumint %}
+              {% set total = progress | map(attribute="challenge") | map(attribute="points") | sumint %}
+              {{ display_points(got) }} / {{ display_points(total) }} ({{ (got / total * 100) | round(2) }} %)
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
     <p>
       <span>总得分:</span>
       <span>{{ display_points(progress | map(attribute="points") | sumint) }}</span>

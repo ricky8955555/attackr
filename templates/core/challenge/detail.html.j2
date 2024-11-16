@@ -20,14 +20,17 @@
 
 <div class="ps-3 py-2 mb-5 border-3 border-start border-info rounded">
   <h1>
-    {% if problemset %}
-    <span class="fw-bold">[{{ problemset.name }}]</span>
+    {% if difficulty %}
+    <span class="fw-bold" style="color: {{ difficulty.color }}">[{{ difficulty.name }}]</span>
     {% endif %}
-    <span {% if difficulty %}style="color: {{ difficulty.color }}"{% endif %}>{{ challenge.name }}</span>
+    {% if problemset %}
+    <span class="fw-bold">{{ problemset.name }} &gt;</span>
+    {% endif %}
+    <span>{{ challenge.name }}</span>
   </h1>
   <h6 class="text-secondary mb-4">
     {% from 'functions/points' import display as display_points %}
-    > 分数: {{ display_points(challenge.points) }} pts
+    &gt; 分数: {{ display_points(challenge.points) }} pts
   </h6>
   <div class="md-block" id="description">
     <p style="white-space: pre-line">{{ challenge.description or "(某人很懒没写介绍)" }}</p>

@@ -1,0 +1,35 @@
+challenge_root: /path/to/challenges
+artifact_root: /path/to/artifacts
+
+docker:
+  expiry:  # Docker 容器自动销毁时间
+    secs: 3600
+    nanos: 0
+
+  options:
+    cpus: 1  # 限制容器 CPU 数量
+    memory: 64_000_000  # 限制容器内存占用 (单位: B)
+    storage: '16M'  # 限制容器硬盘占用
+
+    addrs: # 监听地址
+      - 127.0.0.1
+      - ::1
+    ports: # 监听端口范围
+      start: 10000
+      end: 20000
+
+  mapped_addrs: # 端口映射
+    # 对等端口范围映射
+    - addr: 11.45.1.4
+
+    # 非对等端口范围映射
+    - addr: 19.19.8.10
+      ports:
+        start: 20000
+        end: 30000
+
+dynpoints: dynpoints/simple.koto  # 动态积分脚本，值为 null 时表示不使用动态积分
+
+clear_on_solved: true  # 值为 true 时表示产物在用户解出后自动清理
+
+show_uncategorized: true  # 值为 true 时表示显示未划分题集的题目

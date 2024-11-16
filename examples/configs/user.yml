@@ -1,0 +1,17 @@
+jwt:
+  # algo: HS256
+  # 
+  # key:
+  #   passphrase: th15_i5_a_sAf3_pa5sphr3s3!!!  # HMAC 密钥
+
+  algo: RS256  # JWT 密钥算法
+
+  key:
+    privkey: keys/privkey.pem  # JWT 私钥
+    pubkey: keys/pubkey.pem  # JWT 公钥
+
+  expiry:  # JWT 有效期
+    secs: 3600
+    nanos: 0
+
+no_verify: true  # 值为 true 时表示注册不需要审核

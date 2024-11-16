@@ -1,0 +1,7 @@
+name: attackr  # 比赛名称
+description: A platform for ctfer  # 比赛介绍
+
+timezone: +08:00  # 时区 (默认为 UTC)
+
+start_at: 2024-11-11 11:45:14.0  # 开始时间
+end_at: 2025-01-09 19:08:10.0  # 结束时间

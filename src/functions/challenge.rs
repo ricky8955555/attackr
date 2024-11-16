@@ -363,10 +363,7 @@ pub async fn build_challenge(db: &Db, user: Option<i32>, challenge: i32) -> Resu
             bail!("static challenge should not have a user id assigned.");
         }
 
-        if let Ok(artifact) = get_artifact(db, challenge, user).await {
-            _ = clear_artifact(&artifact).await;
-            _ = delete_artifact(db, challenge, user).await;
-        }
+        let old_artifact = get_artifact(db, challenge, user).await;
 
         let name = uuid::Uuid::new_v4().hyphenated().to_string();
         let target = CONFIG.artifact_root.join(&name);
@@ -393,6 +390,11 @@ pub async fn build_challenge(db: &Db, user: Option<i32>, challenge: i32) -> Resu
         };
 
         update_artifact(db, artifact).await?;
+
+        if let Ok(artifact) = old_artifact {
+            _ = clear_artifact(&artifact).await;
+            _ = delete_artifact(db, challenge, user).await;
+        }
 
         Ok(())
     }

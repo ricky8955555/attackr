@@ -2,7 +2,7 @@
 
 ## 简介
 
-attackr 是使用 [Rust](https://www.rust-lang.org) + [Rocket.rs](https://rocket.rs) + [MiniJinja](https://github.com/mitsuhiko/minijinja) 开发的 CTF 平台，并使用 [Koto](https://koto.dev/) 脚本语言实现动态积分及对用户倍数赋分支持。
+attackr 是使用 [Rust](https://www.rust-lang.org) + [Rocket](https://rocket.rs) + [MiniJinja](https://github.com/mitsuhiko/minijinja) 开发的 CTF 平台，并使用 [Koto](https://koto.dev/) 脚本语言实现动态积分及对用户倍数赋分支持。
 
 由于设计限制，本平台只支持在单个实例上配置单个比赛，且不支持配置多实例进行负载平衡，适合小型比赛使用。
 

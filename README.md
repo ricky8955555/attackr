@@ -32,7 +32,6 @@ attackr 是使用 [Rust](https://www.rust-lang.org) + [Rocket.rs](https://rocket
     - 支持昵称中使用 Tag 并根据 Hash 设置 Tag 颜色
     - 支持在用户重置密码后无效化 JWT
     - 限制被禁用的用户进行登录及访问其他页面
-    - 检验用户输入 Flag
     - 可配置用户注册审核
     - 可配置 JWT 密钥的算法及有效时间
 - 题目
@@ -49,6 +48,7 @@ attackr 是使用 [Rust](https://www.rust-lang.org) + [Rocket.rs](https://rocket
     - 支持单个题目多个产物 (包括二进制产物和 Docker 产物)
     - 显示题目当前通过人数及分数
     - 禁止用户在比赛前访问题目
+    - 检验用户输入 Flag
     - 可配置题目及产物的储存路径
     - 可配置 Docker 监听的地址及端口 (支持 IPv4、IPv6)
     - 可配置 Docker 端口映射 (仅作为对用户的显示，并不能实现功能上的映射)

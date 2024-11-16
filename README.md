@@ -91,6 +91,10 @@ attackr 是使用 [Rust](https://www.rust-lang.org) + [Rocket.rs](https://rocket
 
 ## 截图
 
+<details>
+
+<summary>显示所有截图</summary>
+
 ![](assets/1.webp)
 
 ![](assets/2.webp)
@@ -98,6 +102,8 @@ attackr 是使用 [Rust](https://www.rust-lang.org) + [Rocket.rs](https://rocket
 ![](assets/4.webp)
 
 ![](assets/3.webp)
+
+</details>
 
 ## 构建
 

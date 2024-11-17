@@ -8,7 +8,7 @@ docker:
 
   options:
     cpus: 1  # 限制容器 CPU 数量
-    memory: 64_000_000  # 限制容器内存占用 (单位: B)
+    memory: 64000000  # 限制容器内存占用 (单位: B)
     storage: '16M'  # 限制容器硬盘占用
 
     addrs: # 监听地址

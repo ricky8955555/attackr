@@ -127,6 +127,14 @@ attackr 是使用 [Rust](https://www.rust-lang.org) + [Rocket](https://rocket.rs
 
 详细参见 [examples/dynpoints](examples/dynpoints) 中给出的示例。
 
+## 题目源代码编写
+
+> 注: 如果不需要使用平台进行构建的，可以先在本地构建成产物，然后再通过附件形式上传到平台，可减小平台相应构建负担。
+
+题目源代码需要以 *Tarball Identity* (`.tar`) 档案包的形式上传到平台，并且档案包根目录下必须含有 `build.yml` 文件指引源代码的构建。
+
+详细参见 [examples/challenges](examples/challenges) 中给出的示例。
+
 ## 运行
 
 在编写好相应配置文件及脚本之后直接运行 `attackr` 即可。

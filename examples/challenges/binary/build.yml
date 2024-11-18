@@ -1,0 +1,12 @@
+steps:
+  - type: Cmd
+
+    image: buildpack-deps:bookworm  # 用于进行构建操作的 Docker 镜像
+
+    cmds:  # 构建指令
+      - sed -i 's_flag{}_'"$ATTACKR_FLAG"'_' challenge.c
+      - gcc -ochallenge challenge.c
+
+artifacts:
+  - type: Binary
+    path: challenge  # 产物路径

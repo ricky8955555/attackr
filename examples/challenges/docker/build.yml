@@ -1,0 +1,11 @@
+steps:
+  - type: Docker
+
+    path: .  # 作为 Docker 构建的根目录 (即 Dockerfile 所在目录)
+
+    config:
+      exposed:  # 暴露端口
+        - 1337/tcp
+
+# 此处无需配置 Docker 镜像产物，会在 steps 中自动推断出产物
+artifacts: []

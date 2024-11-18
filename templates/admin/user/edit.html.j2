@@ -17,7 +17,7 @@
   </div>
   <div class="input-group mb-3">
     <span class="input-group-text">昵称</span>
-    <input type="text" name="nickname" class="form-control" placeholder="昵称 (置空将清除)" maxlength="60"
+    <input type="text" name="nickname" class="form-control" placeholder="昵称 (# 将会被解析为 Tag) (置空将清除)" maxlength="60"
       value="{% if user.nickname %}{{ user.nickname }}{% endif %}">
   </div>
   <div class="input-group mb-3">

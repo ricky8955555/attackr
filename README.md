@@ -112,7 +112,20 @@ attackr 是使用 [Rust](https://www.rust-lang.org) + [Rocket](https://rocket.rs
 
 ## 配置及脚本编写
 
-参见 [examples](examples/) 中给出的示例。
+### 平台配置
+
+参见 [examples/configs](examples/configs) 中给出的示例。
+
+### 动态积分脚本
+
+动态积分脚本必须要提供两个函数:
+
+- `calculate_points`: 计算题目动态积分
+- `calculate_factor`: 计算题目对指定排名用户的分数倍数
+
+脚本可放在任意位置，并将脚本路径配置到 `challenge.yml` 配置文件下的 `dynpoints` 配置项 (详见 [examples/configs/challenge.yml](examples/configs/challenge.yml))
+
+详细参见 [examples/dynpoints](examples/dynpoints) 中给出的示例。
 
 ## 运行
 

@@ -11,7 +11,7 @@ use rocket_dyn_templates::{context, Template};
 use crate::{
     db::{
         query::{
-            artifact::{delete_artifact_by_id, get_artifact_by_id, list_artifacts},
+            artifact::{delete_artifact, get_artifact_by_id, list_artifacts},
             challenge::{get_challenge, list_challenges},
             user::{get_user, list_users},
         },
@@ -127,7 +127,7 @@ async fn delete(jar: &CookieJar<'_>, db: Db, id: i32) -> Result<Flash<Redirect>>
 
     let cleared = clear_artifact(&artifact).await;
 
-    delete_artifact_by_id(&db, id)
+    delete_artifact(&db, id)
         .await
         .flash_expect(uri!(ROOT, index), "删除产物失败")?;
 

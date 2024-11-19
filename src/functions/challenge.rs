@@ -24,8 +24,8 @@ use crate::{
         models::{Artifact as ArtifactEntry, Challenge, Score, Solved, Submission},
         query::{
             artifact::{
-                delete_artifact, delete_dynamic_artifact, get_artifact, list_challenge_artifacts,
-                update_artifact,
+                delete_artifact, get_artifact,
+                list_challenge_artifacts, update_artifact,
             },
             challenge::{delete_challenge, get_challenge, list_challenges, update_challenge},
             score::add_score,
@@ -393,7 +393,7 @@ pub async fn build_challenge(db: &Db, user: Option<i32>, challenge: i32) -> Resu
 
         if let Ok(artifact) = old_artifact {
             _ = clear_artifact(&artifact).await;
-            _ = delete_artifact(db, challenge, user).await;
+            _ = delete_artifact(db, artifact.id.unwrap()).await;
         }
 
         Ok(())
@@ -672,7 +672,7 @@ pub async fn solve_challenge(db: &Db, user: i32, challenge: i32, flag: &str) -> 
     if let Some(artifact) = artifact {
         if CONFIG.clear_on_solved && dynamic {
             _ = clear_artifact(&artifact).await;
-            _ = delete_dynamic_artifact(db, user, challenge).await;
+            _ = delete_artifact(db, artifact.id.unwrap()).await;
         }
     }
 

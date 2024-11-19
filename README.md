@@ -25,6 +25,7 @@ attackr 是使用 [Rust](https://www.rust-lang.org) + [Rocket](https://rocket.rs
     - 显示当前比赛状态
 - 用户
     - 登录 / 注册用户
+    - 使用 Argon2id 对密码进行 Hash 储存
     - 查看用户主页
     - 修改用户信息
     - 支持通过 Gravatar 获取用户头像

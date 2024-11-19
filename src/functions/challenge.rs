@@ -405,6 +405,10 @@ pub async fn build_challenge(db: &Db, user: Option<i32>, challenge: i32) -> Resu
     result
 }
 
+pub async fn is_challenge_building(user: Option<i32>, challenge: i32) -> bool {
+    BUILDING.read().await.contains(&(user, challenge))
+}
+
 pub async fn is_docker_running(user: i32, challenge: i32, artifact: usize) -> bool {
     DOCKER_INSTANCES
         .read()

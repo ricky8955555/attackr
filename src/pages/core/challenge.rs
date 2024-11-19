@@ -29,8 +29,9 @@ use crate::{
     },
     functions::{
         challenge::{
-            build_challenge, get_docker_instance_info, is_docker_running, is_publicly_available,
-            open_attachment, open_binary, run_docker, solve_challenge, stop_docker,
+            build_challenge, get_docker_instance_info, is_challenge_building, is_docker_running,
+            is_publicly_available, open_attachment, open_binary, run_docker, solve_challenge,
+            stop_docker,
         },
         event::cmp_period,
         user::is_admin,
@@ -171,10 +172,15 @@ async fn detail(
         .some()
         .resp_expect("获取解题状态失败")?;
 
-    let artifact = get_artifact(&db, id, challenge.dynamic.then_some(user_id))
-        .await
-        .some()
-        .resp_expect("获取构建产物信息失败")?;
+    let building = is_challenge_building(challenge.dynamic.then_some(user_id), id).await;
+
+    let artifact = match building {
+        false => get_artifact(&db, id, challenge.dynamic.then_some(user_id))
+            .await
+            .some()
+            .resp_expect("获取构建产物信息失败")?,
+        true => None,
+    };
 
     let mut dockers = HashMap::new();
 
@@ -200,7 +206,7 @@ async fn detail(
 
     Ok(Template::render(
         "core/challenge/detail",
-        context! {flash, challenge, problemset, difficulty, solved, solved_count, artifact, dockers},
+        context! {flash, challenge, problemset, difficulty, solved, solved_count, artifact, dockers, building},
     ))
 }
 

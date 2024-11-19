@@ -6,9 +6,15 @@
 
 {% block content %}
 
-{% if challenge.dynamic and not artifact %}
+{% if challenge.dynamic and not artifact and not building %}
 <div class="alert alert-info" role="alert">
   尚未构建题目，请点击“构建”按钮进行构建。产物将在构建后显示。
+</div>
+{% endif %}
+
+{% if building %}
+<div class="alert alert-warning" role="alert">
+  产物正在构建中，请耐心等待。
 </div>
 {% endif %}
 
@@ -111,7 +117,7 @@
 </div>
 {% endif %}
 
-{% if challenge.dynamic %}
+{% if challenge.dynamic and not building %}
 <div>
   <h5>操作</h5>
   {% if artifact %}

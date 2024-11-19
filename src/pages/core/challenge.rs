@@ -367,10 +367,9 @@ async fn solve(
         .await
         .flash_expect(uri!(ROOT, detail(id)), "更新解题状态失败")?;
 
-    Ok(if solved {
-        Flash::success(Redirect::to(uri!(ROOT, detail(id))), "恭喜！通过挑战！")
-    } else {
-        Flash::error(Redirect::to(uri!(ROOT, detail(id))), "Flag 不正确！")
+    Ok(match solved {
+        true => Flash::success(Redirect::to(uri!(ROOT, detail(id))), "恭喜！通过挑战！"),
+        false => Flash::error(Redirect::to(uri!(ROOT, detail(id))), "Flag 不正确！"),
     })
 }
 

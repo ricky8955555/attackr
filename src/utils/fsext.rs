@@ -45,10 +45,9 @@ impl WalkDir {
             let entry = entry.unwrap();
             let metadata = entry.metadata().await?;
 
-            let symlink = if self.follow_symlink && metadata.is_symlink() {
-                Some(fs::read_link(entry.path()).await?)
-            } else {
-                None
+            let symlink = match self.follow_symlink && metadata.is_symlink() {
+                true => Some(fs::read_link(entry.path()).await?),
+                false => None,
             };
 
             if metadata.is_dir() || symlink.is_some_and(|path| path.is_dir()) {
@@ -141,14 +140,13 @@ where
     P: AsRef<Path>,
     Q: AsRef<Path>,
 {
-    let target = if options.copy_inside {
-        target.as_ref().join(
+    let target = match options.copy_inside {
+        true => target.as_ref().join(
             path::absolute(source.as_ref())?
                 .file_name()
                 .expect("file_name should be available here."),
-        )
-    } else {
-        target.as_ref().to_path_buf()
+        ),
+        false => target.as_ref().to_path_buf(),
     };
 
     if options.erase && target.exists() {

@@ -92,10 +92,9 @@ async fn view(
     let current = functional_auth_session(&db, jar).await.ok();
     let is_self = current.as_ref().and_then(|user| user.id) == Some(id);
 
-    let user = if is_self {
-        current.as_ref().unwrap()
-    } else {
-        &get_user(&db, id).await.resp_expect("获取用户失败")?
+    let user = match is_self {
+        true => current.as_ref().unwrap(),
+        false => &get_user(&db, id).await.resp_expect("获取用户失败")?,
     };
 
     if !user.enabled {
@@ -299,13 +298,12 @@ async fn register(db: Db, info: Form<Register<'_>>) -> Result<Flash<Redirect>> {
         .await
         .flash_expect(uri!(ROOT, register_page), "创建用户失败")?;
 
-    Ok(if enabled {
-        Flash::success(Redirect::to(uri!(ROOT, login_page)), "注册成功，请登录")
-    } else {
-        Flash::success(
+    Ok(match enabled {
+        true => Flash::success(Redirect::to(uri!(ROOT, login_page)), "注册成功，请登录"),
+        false => Flash::success(
             Redirect::to(uri!(ROOT, register_page)),
             "注册成功，请等待管理员审核",
-        )
+        ),
     })
 }
 

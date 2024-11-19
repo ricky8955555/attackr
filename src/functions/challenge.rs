@@ -23,10 +23,7 @@ use crate::{
     db::{
         models::{Artifact as ArtifactEntry, Challenge, Score, Solved, Submission},
         query::{
-            artifact::{
-                delete_artifact, get_artifact,
-                list_challenge_artifacts, update_artifact,
-            },
+            artifact::{delete_artifact, get_artifact, list_challenge_artifacts, update_artifact},
             challenge::{delete_challenge, get_challenge, list_challenges, update_challenge},
             score::add_score,
             solved::{list_challenge_effective_solved_with_submission, update_solved},

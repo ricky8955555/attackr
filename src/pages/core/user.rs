@@ -26,6 +26,7 @@ use crate::{
     },
     functions::{
         challenge::is_publicly_available,
+        event::is_available as is_event_available,
         user::{
             auth_session as functional_auth_session, destroy_session, generate_random,
             hash_password, new_session, verify_password,
@@ -101,46 +102,56 @@ async fn view(
         return Err(Error::redirect(uri!(ROOT, index), "禁止查看被禁用用户主页"));
     }
 
-    let problemsets: HashMap<_, _> = list_problemsets(&db)
-        .await
-        .resp_expect("获取题集列表失败")?
-        .into_iter()
-        .map(|problemset| (problemset.id, problemset))
-        .collect();
+    // make them live longer
+    let problemsets: HashMap<_, _>;
+    let difficulties: HashMap<_, _>;
+    let solved: HashMap<_, _>;
 
-    let difficulties: HashMap<_, _> = list_difficulties(&db)
-        .await
-        .resp_expect("获取题集列表失败")?
-        .into_iter()
-        .map(|difficulty| (difficulty.id, difficulty))
-        .collect();
+    let progress: Vec<_> = match is_event_available(current.as_ref()) {
+        false => Vec::new(),
+        true => {
+            problemsets = list_problemsets(&db)
+                .await
+                .resp_expect("获取题集列表失败")?
+                .into_iter()
+                .map(|problemset| (problemset.id, problemset))
+                .collect();
 
-    let solved: HashMap<_, _> = list_user_solved(&db, id)
-        .await
-        .resp_expect("获取用户解题信息失败")?
-        .into_iter()
-        .map(|data| (data.submission.challenge, data))
-        .collect();
+            difficulties = list_difficulties(&db)
+                .await
+                .resp_expect("获取题集列表失败")?
+                .into_iter()
+                .map(|difficulty| (difficulty.id, difficulty))
+                .collect();
 
-    let progress: Vec<_> = list_challenges(&db)
-        .await
-        .resp_expect("获取题目列表失败")?
-        .into_iter()
-        .filter(is_publicly_available)
-        .map(|challenge| {
-            let solved = solved.get(&challenge.id.unwrap());
+            solved = list_user_solved(&db, id)
+                .await
+                .resp_expect("获取用户解题信息失败")?
+                .into_iter()
+                .map(|data| (data.submission.challenge, data))
+                .collect();
 
-            let points = solved.map(|data| data.score.points).unwrap_or(0.0);
+            list_challenges(&db)
+                .await
+                .resp_expect("获取题目列表失败")?
+                .into_iter()
+                .filter(is_publicly_available)
+                .map(|challenge| {
+                    let solved = solved.get(&challenge.id.unwrap());
 
-            context! {
-                solved,
-                points,
-                problemset: problemsets.get(&challenge.problemset),
-                difficulty: difficulties.get(&challenge.difficulty),
-                challenge,
-            }
-        })
-        .collect();
+                    let points = solved.map(|data| data.score.points).unwrap_or(0.0);
+
+                    context! {
+                        solved,
+                        points,
+                        problemset: problemsets.get(&challenge.problemset),
+                        difficulty: difficulties.get(&challenge.difficulty),
+                        challenge,
+                    }
+                })
+                .collect()
+        }
+    };
 
     let email = format!(
         "{:x}",

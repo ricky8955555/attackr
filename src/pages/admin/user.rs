@@ -127,17 +127,20 @@ async fn edit(
         }
     }
 
+    let password = match info.password.is_empty() {
+        true => user.password.clone(),
+        false => {
+            hash_password(info.password).flash_expect(uri!(ROOT, index), "生成密码 Hash 失败")?
+        }
+    };
+
     let new_user = User {
         id: Some(id),
         username: Some(info.username)
             .filter(|s| !s.is_empty())
             .unwrap_or(&user.username)
             .to_string(),
-        password: Some(info.password)
-            .filter(|s| !s.is_empty())
-            .map(hash_password)
-            .unwrap_or(user.password)
-            .to_string(),
+        password,
         contact: Some(info.contact)
             .filter(|s| !s.is_empty())
             .unwrap_or(&user.contact)

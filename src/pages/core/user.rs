@@ -187,17 +187,20 @@ async fn edit(jar: &CookieJar<'_>, db: Db, info: Form<Edit<'_>>) -> Result<Flash
 
     let new_password = !info.password.is_empty();
 
+    let password = match new_password {
+        true => {
+            hash_password(info.password).flash_expect(uri!(ROOT, index), "生成密码 Hash 失败")?
+        }
+        false => user.password.clone(),
+    };
+
     let new_user = User {
         id: Some(user.id.unwrap()),
         username: Some(info.username)
             .filter(|s| !s.is_empty())
             .unwrap_or(&user.username)
             .to_string(),
-        password: Some(info.password)
-            .filter(|s| !s.is_empty())
-            .map(hash_password)
-            .unwrap_or(user.password)
-            .to_string(),
+        password,
         contact: Some(info.contact)
             .filter(|s| !s.is_empty())
             .unwrap_or(&user.contact)
@@ -244,11 +247,13 @@ async fn login(jar: &CookieJar<'_>, db: Db, login: Form<Login<'_>>) -> Result<Re
         if !user.enabled {
             return Err(Error::redirect(uri!(ROOT, login_page), "用户被禁用"));
         }
-        if let Ok(valid) = verify_password(login.password, &user.password) {
-            if valid {
-                new_session(jar, &user).flash_expect(uri!(ROOT, login_page), "创建 Token 失败")?;
-                return Ok(Redirect::to(uri!(ROOT, index)));
-            }
+
+        let valid = verify_password(login.password, &user.password)
+            .flash_expect(uri!(ROOT, login_page), "校验密码失败")?;
+
+        if valid {
+            new_session(jar, &user).flash_expect(uri!(ROOT, login_page), "创建 Token 失败")?;
+            return Ok(Redirect::to(uri!(ROOT, index)));
         }
     }
 
@@ -279,7 +284,7 @@ async fn register(db: Db, info: Form<Register<'_>>) -> Result<Flash<Redirect>> {
     let user = User {
         id: None,
         username: info.username.to_string(),
-        password: hash_password(info.password),
+        password: hash_password(info.password).resp_expect("生成密码 Hash 失败")?,
         contact: info.contact.to_string(),
         email: info.email.to_string(),
         enabled,

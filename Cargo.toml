@@ -15,8 +15,8 @@ strip = "symbols"
 
 [dependencies]
 anyhow = "1.0.86"
+argon2 = { version = "0.5.3", features = ["std"] }
 async-tempfile = { version = "0.6.0", features = ["uuid"] }
-bcrypt = "0.15.1"
 bollard = { version = "0.17.0", features = ["buildkit"] }
 diesel = { version = "2.2.2", features = ["returning_clauses_for_sqlite_3_35", "time"] }
 diesel-derive-enum = { version = "2.1.0", features = ["sqlite"] }

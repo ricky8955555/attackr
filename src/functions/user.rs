@@ -1,7 +1,13 @@
 use std::{fs, sync::LazyLock, time::SystemTime};
 
 use anyhow::{anyhow, bail, Result};
-use bcrypt::{hash, verify, DEFAULT_COST};
+use argon2::{
+    password_hash::{
+        rand_core::OsRng,
+        PasswordHash, PasswordHasher, PasswordVerifier, SaltString
+    },
+    Argon2
+};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use rocket::{fairing::AdHoc, http::CookieJar, Build, Rocket};
 use serde::{Deserialize, Serialize};
@@ -143,12 +149,17 @@ pub async fn auth_session(db: &Db, jar: &CookieJar<'_>) -> Result<User> {
     Ok(user)
 }
 
-pub fn hash_password(password: &str) -> String {
-    hash(password, DEFAULT_COST).unwrap()
+pub fn hash_password(password: &str) -> Result<String> {
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = Argon2::default();
+
+    Ok(argon2.hash_password(password.as_bytes(), &salt)?.to_string())
 }
 
 pub fn verify_password(password: &str, hash: &str) -> Result<bool> {
-    Ok(verify(password, hash)?)
+    let hash = PasswordHash::new(hash)?;
+
+    Ok(Argon2::default().verify_password(password.as_bytes(), &hash).is_ok())
 }
 
 pub fn generate_random() -> String {
@@ -183,7 +194,7 @@ pub async fn initialize_superuser(rocket: Rocket<Build>) -> Rocket<Build> {
         let user = User {
             id: None,
             username: username.to_string(),
-            password: hash_password(&password),
+            password: hash_password(&password).expect("failed to hash password"),
             contact: "admin".to_string(),
             email: "admin@example.com".to_string(),
             enabled: true,

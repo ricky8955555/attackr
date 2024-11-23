@@ -56,7 +56,7 @@
         <th scope="row">{{ loop.index }}</th>
         <th>
           <a href="/user/{{ user.id }}" class="link-secondary link-offset-2 link-underline-opacity-0 fw-semibold"
-            style="font-size: .95rem;" id="name">
+            style="font-size: .95rem;" title="{{ user.username }}" id="name">
             {{ user.nickname or user.username }}</a>
         </th>
         {% for solved in solved %}

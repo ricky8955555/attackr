@@ -140,6 +140,9 @@ dependencies = [
  "itertools",
  "jsonwebtoken",
  "koto",
+ "koto_json",
+ "koto_random",
+ "koto_tempfile",
  "log",
  "num_enum",
  "rocket",
@@ -1492,6 +1495,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "koto_json"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "06df48dea3a533946568c64192770d19cf559f2b9eb02b9e287a5171caac28b8"
+dependencies = [
+ "koto_runtime",
+ "koto_serialize",
+ "serde_json",
+]
+
+[[package]]
 name = "koto_lexer"
 version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1524,6 +1538,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "koto_random"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7199839530ab77631666fac9b14a47d90ec3eb2e0afc5f068d612416a324f27a"
+dependencies = [
+ "getrandom",
+ "koto_derive",
+ "koto_runtime",
+ "lazy_static",
+ "rand",
+ "rand_chacha",
+]
+
+[[package]]
 name = "koto_runtime"
 version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1542,6 +1570,26 @@ dependencies = [
  "smallvec",
  "thiserror",
  "unicode-segmentation",
+]
+
+[[package]]
+name = "koto_serialize"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "877d803336bd5c96f3ec6757bc15e419255f4f14abb6f818c7566ce5b864bb1b"
+dependencies = [
+ "koto_runtime",
+ "serde",
+]
+
+[[package]]
+name = "koto_tempfile"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c4d15f50ec5824c728fccbce363e430db03e9cb0200d68ede81f5fa723c353c"
+dependencies = [
+ "koto_runtime",
+ "tempfile",
 ]
 
 [[package]]
@@ -2601,6 +2649,7 @@ version = "1.0.133"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c7fceb2473b9166b2294ef05efcb65a3db80803f0b03ef86a5fc88a2b85ee377"
 dependencies = [
+ "indexmap 2.6.0",
  "itoa",
  "memchr",
  "ryu",

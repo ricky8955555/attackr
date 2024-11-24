@@ -3,6 +3,7 @@ use std::{io::Read, process::Command};
 use anyhow::{anyhow, Result};
 use koto::{prelude::*, runtime::ErrorKind};
 
+#[cfg(feature = "koto_exec")]
 fn exec(ctx: &mut CallContext) -> koto::Result<KValue> {
     match ctx.args() {
         [KValue::Str(program), KValue::Tuple(targs)] => {
@@ -58,8 +59,18 @@ impl KotoScript {
     pub fn compile(script: &str) -> Result<Self> {
         let mut koto = Koto::new();
 
+        #[cfg(any(feature = "koto_exec", feature = "koto_json", feature = "koto_random", feature = "koto_tempfile"))]
         let prelude = koto.prelude();
+
+        #[cfg(feature = "koto_exec")]
         prelude.add_fn("exec", exec);
+
+        #[cfg(feature = "koto_json")]
+        prelude.insert("json", koto_json::make_module());
+        #[cfg(feature = "koto_random")]
+        prelude.insert("random", koto_random::make_module());
+        #[cfg(feature = "koto_tempfile")]
+        prelude.insert("tempfile", koto_tempfile::make_module());
 
         koto.compile_and_run(script)?;
 

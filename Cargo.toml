@@ -27,6 +27,9 @@ futures-util = "0.3.30"
 itertools = "0.13.0"
 jsonwebtoken = "9.3.0"
 koto = "0.14.1"
+koto_json = { version = "0.14.1", optional = true }
+koto_random = { version = "0.14.1", optional = true }
+koto_tempfile = { version = "0.14.1", optional = true }
 log = "0.4.22"
 num_enum = "0.7.3"
 rocket = { version = "0.5.1", features = ["json"] }
@@ -42,3 +45,9 @@ time = { version = "0.3.36", features = ["serde", "serde-human-readable"] }
 tokio = { version = "1.40.0", features = ["process", "rt"] }
 uuid = { version = "1.10.0", features = ["v4"] }
 validator = { version = "0.18.1", features = ["derive"] }
+
+[features]
+koto_exec = []
+koto_json = ["dep:koto_json"]
+koto_random = ["dep:koto_random"]
+koto_tempfile = ["dep:koto_tempfile"]

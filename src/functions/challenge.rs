@@ -17,6 +17,15 @@ use tokio::{
     sync::{Mutex, RwLock},
 };
 
+#[cfg(feature = "activity")]
+use crate::{
+    activity::challenge::on_solved,
+    db::query::{
+        solved::{count_challenge_effective_solved, get_solved},
+        user::get_user,
+    },
+};
+
 use crate::{
     configs::challenge::{MappedAddr, CONFIG},
     core::conductor::{self, Artifact, BuildInfo, RunDockerResult},
@@ -662,15 +671,22 @@ pub async fn solve_challenge(db: &Db, user: i32, challenge: i32, flag: &str) -> 
 
     update_solved(db, solved).await?;
 
-    let dynamic = entry.dynamic;
-
-    recalculate_challenge_points_consumed(db, entry).await?;
+    recalculate_challenge_points_consumed(db, entry.clone()).await?;
 
     if let Some(artifact) = artifact {
-        if CONFIG.clear_on_solved && dynamic {
+        if CONFIG.clear_on_solved && entry.dynamic {
             _ = clear_artifact(&artifact).await;
             _ = delete_artifact(db, artifact.id.unwrap()).await;
         }
+    }
+
+    #[cfg(feature = "activity")]
+    {
+        let rank = count_challenge_effective_solved(db, challenge).await?;
+        let solved = get_solved(db, user, challenge).await?;
+        let user = get_user(db, user).await?;
+
+        on_solved(&user, &entry, &solved, rank).await;
     }
 
     Ok(true)

@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate rocket;
 
+#[cfg(feature = "activity")]
+mod activity;
 mod configs;
 mod core;
 mod db;

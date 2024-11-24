@@ -1,3 +1,5 @@
+#[cfg(feature = "activity")]
+pub mod activity;
 pub mod challenge;
 pub mod event;
 pub mod user;

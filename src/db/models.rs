@@ -269,9 +269,9 @@ pub struct Solved {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DetailedSolved {
     #[serde(flatten)]
-    pub submission: Submission,
-    #[serde(flatten)]
     pub score: Score,
+    #[serde(flatten)]
+    pub submission: Submission,
     #[serde(flatten)]
     pub solved: Solved,
 }

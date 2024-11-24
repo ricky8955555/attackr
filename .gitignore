@@ -39,3 +39,6 @@ db.*
 
 # Artifacts
 attackr.tar.gz
+
+# VSCode workspace configs
+.vscode/

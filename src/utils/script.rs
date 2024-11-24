@@ -1,7 +1,11 @@
-use std::{io::Read, process::Command};
+#[cfg(feature = "koto_exec")]
+use {
+    koto::runtime::ErrorKind,
+    std::{io::Read, process::Command},
+};
 
 use anyhow::{anyhow, Result};
-use koto::{prelude::*, runtime::ErrorKind};
+use koto::prelude::*;
 
 #[cfg(feature = "koto_exec")]
 fn exec(ctx: &mut CallContext) -> koto::Result<KValue> {
@@ -59,7 +63,12 @@ impl KotoScript {
     pub fn compile(script: &str) -> Result<Self> {
         let mut koto = Koto::new();
 
-        #[cfg(any(feature = "koto_exec", feature = "koto_json", feature = "koto_random", feature = "koto_tempfile"))]
+        #[cfg(any(
+            feature = "koto_exec",
+            feature = "koto_json",
+            feature = "koto_random",
+            feature = "koto_tempfile"
+        ))]
         let prelude = koto.prelude();
 
         #[cfg(feature = "koto_exec")]

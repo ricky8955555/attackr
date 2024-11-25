@@ -1,8 +1,5 @@
 #[cfg(feature = "koto_exec")]
-use {
-    koto::runtime::ErrorKind,
-    std::{io::Read, process::Command},
-};
+use {koto::runtime::ErrorKind, std::process::Command};
 
 use anyhow::{anyhow, Result};
 use koto::prelude::*;
@@ -20,34 +17,13 @@ fn exec(ctx: &mut CallContext) -> koto::Result<KValue> {
                 }
             }
 
-            let child = Command::new(program.as_str())
+            let output = Command::new(program.as_str())
                 .args(args)
-                .spawn()
+                .output()
                 .map_err(|err| ErrorKind::StringError(format!("{err:?}")))?;
 
-            let stdout = match child.stdout {
-                Some(mut val) => {
-                    let mut content = String::new();
-
-                    val.read_to_string(&mut content)
-                        .map_err(|err| ErrorKind::StringError(format!("{err:?}")))?;
-
-                    KValue::Str(content.into())
-                }
-                None => KValue::Null,
-            };
-
-            let stderr = match child.stderr {
-                Some(mut val) => {
-                    let mut content = String::new();
-
-                    val.read_to_string(&mut content)
-                        .map_err(|err| ErrorKind::StringError(format!("{err:?}")))?;
-
-                    KValue::Str(content.into())
-                }
-                None => KValue::Null,
-            };
+            let stdout = KValue::Str(String::from_utf8_lossy(&output.stdout).to_string().into());
+            let stderr = KValue::Str(String::from_utf8_lossy(&output.stderr).to_string().into());
 
             Ok(KValue::Tuple((&[stdout, stderr]).into()))
         }

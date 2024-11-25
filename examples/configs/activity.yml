@@ -1,0 +1,5 @@
+scripts:
+  - path: activity/simple.koto  # 脚本路径
+
+    kinds:  # 监听事件
+      - Solved  # 监听解题通过事件

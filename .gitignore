@@ -35,7 +35,7 @@ db.*
 
 # User scripts
 *.koto
-!examples/dynpoints/*.koto
+!examples/**/*.koto
 
 # Artifacts
 attackr.tar.gz

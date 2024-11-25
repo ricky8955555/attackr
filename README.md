@@ -2,7 +2,7 @@
 
 ## 简介
 
-attackr 是使用 [Rust](https://www.rust-lang.org) + [Rocket](https://rocket.rs) + [MiniJinja](https://github.com/mitsuhiko/minijinja) 开发的 CTF 平台，并使用 [Koto](https://koto.dev/) 脚本语言实现动态积分及对用户倍数赋分支持。
+attackr 是使用 [Rust](https://www.rust-lang.org) + [Rocket](https://rocket.rs) + [MiniJinja](https://github.com/mitsuhiko/minijinja) 开发的 CTF 平台，并使用 [Koto](https://koto.dev/) 脚本语言实现动态积分及对用户倍数赋分支持以及事件推送支持。
 
 由于设计限制，本平台只支持在单个实例上配置单个比赛，且不支持配置多实例进行负载平衡，适合小型比赛使用。
 
@@ -91,6 +91,15 @@ attackr 是使用 [Rust](https://www.rust-lang.org) + [Rocket](https://rocket.rs
     - 查看用户提交记录
     - 可筛选指定用户 / 题目查看提交记录
 
+### 事件推送
+
+> 该功能需通过配置条件编译 (Features) 启用，详见 [构建](#构建) 一节。
+
+利用 Koto 脚本实现对事件 (Activity) 的监听。
+
+- 题目
+    - 解题通过事件 (Solved)
+
 ## 截图
 
 <details>
@@ -109,7 +118,22 @@ attackr 是使用 [Rust](https://www.rust-lang.org) + [Rocket](https://rocket.rs
 
 ## 构建
 
-可直接运行仓库根目录下的 `build.sh` 进行构建，将会在根目录下产生 `attackr.tar.gz`。将内容解压至工作目录即可。
+目前支持的条件编译 (Features):
+
+- `koto_exec`: 在 Koto 脚本中添加 `exec` 以支持外部程序的运行
+- `koto_json`: 在 Koto 脚本中添加 [`json`](https://github.com/koto-lang/koto/tree/main/libs/json) 库依赖
+- `koto_tempfile`: 在 Koto 脚本中添加 [`tempfile`](https://github.com/koto-lang/koto/tree/main/libs/tempfile) 库依赖
+- `koto_random`: 在 Koto 脚本中添加 [`random`](https://github.com/koto-lang/koto/tree/main/libs/random) 库依赖
+- `activity`: 启用事件推送 (Activity) 支持
+
+选择相应的所需支持，使用指令 `./build.sh [features]`，将 `[features]` 替换为所需的编译条件，多个编译条件使用 `,` 分隔开。如无需启用其他支持，置空 `[features]` 即可。
+
+示例:
+
+- 不带其他支持: `./build.sh`
+- 带 `koto_exec` 及 `activity` 支持: `./build.sh koto_exec,activity`
+
+编译成功后将会在根目录下产生 `attackr.tar.gz`，将内容解压至工作目录即可。
 
 ## 配置及脚本编写
 
@@ -135,6 +159,12 @@ attackr 是使用 [Rust](https://www.rust-lang.org) + [Rocket](https://rocket.rs
 题目源代码需要以 *Tarball Identity* (`.tar`) 档案包的形式上传到平台，并且档案包根目录下必须含有 `build.yml` 文件指引源代码的构建。
 
 详细参见 [examples/challenges](examples/challenges) 中给出的示例。
+
+## 事件监听脚本编写
+
+配置文件参见 [examples/configs/activity.yml](examples/configs/activity.yml) 中给出的示例。
+
+事件监听脚本参见 [examples/activity](examples/activity) 中给出的示例。
 
 ## 运行
 

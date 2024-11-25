@@ -1,3 +1,3 @@
 export solved = |user, challenge, solved, rank|  # 解题通过事件
-  message = '{emoji} 恭喜 {name} 斩获 {challenge.name} {rank}'
+  message = '恭喜 {user.username} 获得 {challenge.name} 第 {rank} 名'
   print message

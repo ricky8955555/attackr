@@ -21,6 +21,7 @@ use tokio::{
 use crate::{
     activity::challenge::on_solved,
     db::query::{
+        problemset::get_problemset,
         solved::{count_challenge_effective_solved, get_solved},
         user::get_user,
     },
@@ -685,8 +686,12 @@ pub async fn solve_challenge(db: &Db, user: i32, challenge: i32, flag: &str) -> 
         let rank = count_challenge_effective_solved(db, challenge).await?;
         let solved = get_solved(db, user, challenge).await?;
         let user = get_user(db, user).await?;
+        let problemset = match entry.problemset {
+            Some(id) => Some(get_problemset(db, id).await?),
+            None => None,
+        };
 
-        on_solved(&user, &entry, &solved, rank).await;
+        on_solved(&user, &entry, problemset.as_ref(), &solved, rank).await;
     }
 
     Ok(true)

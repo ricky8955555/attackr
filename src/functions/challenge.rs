@@ -129,7 +129,7 @@ pub fn stage() -> AdHoc {
                 "Initialize Challenge Function",
                 initialize,
             ))
-            .attach(AdHoc::on_liftoff("Uninitialize Challenge Function", |_| {
+            .attach(AdHoc::on_shutdown("Uninitialize Challenge Function", |_| {
                 Box::pin(async move {
                     uninitialize().await;
                 })

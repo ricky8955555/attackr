@@ -25,7 +25,6 @@ either = { version = "1.13.0", features = ["serde"] }
 flate2 = "1.0.33"
 futures-util = "0.3.30"
 itertools = "0.13.0"
-jsonwebtoken = "9.3.0"
 koto = "0.14.1"
 koto_json = { version = "0.14.1", optional = true }
 koto_random = { version = "0.14.1", optional = true }

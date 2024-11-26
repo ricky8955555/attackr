@@ -1,16 +1,20 @@
-use std::{fs, sync::LazyLock, time::SystemTime};
+use std::{
+    collections::HashMap,
+    sync::LazyLock,
+    time::{Duration, Instant},
+};
 
 use anyhow::{anyhow, bail, Result};
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
-use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use rocket::{fairing::AdHoc, http::CookieJar, Build, Rocket};
-use serde::{Deserialize, Serialize};
+use tokio::sync::RwLock;
+use uuid::Uuid;
 
 use crate::{
-    configs::user::{Key, CONFIG},
+    configs::user::CONFIG,
     db::{
         models::{User, UserRole},
         query::{
@@ -22,125 +26,87 @@ use crate::{
     functions::challenge::clear_artifact,
 };
 
-static ACCESS_TOKEN_PRIVKEY: LazyLock<EncodingKey> = LazyLock::new(|| match &CONFIG.jwt.key {
-    Key::KeyPair { privkey, pubkey: _ } => {
-        let key = &fs::read(privkey).unwrap();
-        match CONFIG.jwt.algo {
-            Algorithm::ES256 | Algorithm::ES384 => EncodingKey::from_ec_pem(key).unwrap(),
-            Algorithm::PS256
-            | Algorithm::PS384
-            | Algorithm::PS512
-            | Algorithm::RS256
-            | Algorithm::RS384
-            | Algorithm::RS512 => EncodingKey::from_rsa_pem(key).unwrap(),
-            Algorithm::EdDSA => EncodingKey::from_ed_pem(key).unwrap(),
-            _ => panic!(
-                "key pair is not applicable to algorithm {:?}",
-                CONFIG.jwt.algo
-            ),
-        }
-    }
-    Key::Passphrase { passphrase } => match CONFIG.jwt.algo {
-        Algorithm::HS256 | Algorithm::HS384 | Algorithm::HS512 => {
-            EncodingKey::from_secret(passphrase.as_bytes())
-        }
-        _ => panic!(
-            "passphrase is not applicable to algorithm {:?}",
-            CONFIG.jwt.algo
-        ),
-    },
-});
+const CHECK_CYCLE: Duration = Duration::from_secs(5);
 
-static ACCESS_TOKEN_PUBKEY: LazyLock<DecodingKey> = LazyLock::new(|| match &CONFIG.jwt.key {
-    Key::KeyPair { privkey: _, pubkey } => {
-        let key = &fs::read(pubkey).unwrap();
-        match CONFIG.jwt.algo {
-            Algorithm::ES256 | Algorithm::ES384 => DecodingKey::from_ec_pem(key).unwrap(),
-            Algorithm::PS256
-            | Algorithm::PS384
-            | Algorithm::PS512
-            | Algorithm::RS256
-            | Algorithm::RS384
-            | Algorithm::RS512 => DecodingKey::from_rsa_pem(key).unwrap(),
-            Algorithm::EdDSA => DecodingKey::from_ed_pem(key).unwrap(),
-            _ => panic!(
-                "key pair is not applicable to algorithm {:?}",
-                CONFIG.jwt.algo
-            ),
-        }
-    }
-    Key::Passphrase { passphrase } => match CONFIG.jwt.algo {
-        Algorithm::HS256 | Algorithm::HS384 | Algorithm::HS512 => {
-            DecodingKey::from_secret(passphrase.as_bytes())
-        }
-        _ => panic!(
-            "passphrase is not applicable to algorithm {:?}",
-            CONFIG.jwt.algo
-        ),
-    },
-});
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct AccessToken {
+#[derive(Debug, Clone)]
+struct Session {
     id: i32,
-    random: String,
-    exp: u64,
+    expiry: Instant,
 }
 
-fn create_token(user: &User) -> Result<String> {
+static SESSIONS: LazyLock<RwLock<HashMap<String, Session>>> =
+    LazyLock::new(|| RwLock::new(HashMap::new()));
+
+async fn session_check() {
+    loop {
+        {
+            let mut sessions = SESSIONS.write().await;
+
+            let now = Instant::now();
+            let mut expired = Vec::new();
+
+            for (id, session) in sessions.iter() {
+                if now >= session.expiry {
+                    expired.push(id.clone());
+                }
+            }
+
+            for id in expired {
+                sessions.remove(&id);
+            }
+        }
+
+        tokio::time::sleep(CHECK_CYCLE).await;
+    }
+}
+
+pub async fn initialize(rocket: Rocket<Build>) -> Rocket<Build> {
+    tokio::spawn(session_check());
+
+    rocket
+}
+
+async fn create_session(user: &User) -> Result<String> {
     if !user.enabled {
         bail!("disabled user.");
     }
 
-    let exp = (SystemTime::now() + CONFIG.jwt.expiry)
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .expect("time should not be earlier than UNIX_EPOCH.")
-        .as_secs();
-
-    let claim = AccessToken {
+    let expiry = Instant::now() + CONFIG.session.expiry;
+    let session = Session {
         id: user.id.unwrap(),
-        random: user.random.clone(),
-        exp,
+        expiry,
     };
+    let id = Uuid::new_v4().as_simple().to_string();
 
-    Ok(encode(
-        &Header::new(CONFIG.jwt.algo),
-        &claim,
-        &ACCESS_TOKEN_PRIVKEY,
-    )?)
+    SESSIONS.write().await.insert(id.clone(), session);
+
+    Ok(id)
 }
 
-pub fn new_session(jar: &CookieJar<'_>, user: &User) -> Result<()> {
-    let token = create_token(user)?;
-    jar.add(("token", token));
+pub async fn new_session(jar: &CookieJar<'_>, user: &User) -> Result<()> {
+    let session = create_session(user).await?;
+    jar.add(("session", session));
     Ok(())
 }
 
-pub fn destroy_session(jar: &CookieJar<'_>) {
-    jar.remove("token");
-}
-
-fn verify_token(token: &str) -> Result<AccessToken> {
-    let token = decode::<AccessToken>(
-        token,
-        &ACCESS_TOKEN_PUBKEY,
-        &Validation::new(CONFIG.jwt.algo),
-    )?;
-
-    Ok(token.claims)
+pub async fn destroy_session(jar: &CookieJar<'_>) -> Result<()> {
+    let cookie = jar.get("session").ok_or(anyhow!("unauthorized session."))?;
+    SESSIONS.write().await.remove(cookie.value());
+    jar.remove("session");
+    Ok(())
 }
 
 pub async fn auth_session(db: &Db, jar: &CookieJar<'_>) -> Result<User> {
-    let jwt = jar.get("token").ok_or(anyhow!("unauthorized session."))?;
-    let token = verify_token(jwt.value())?;
-    let user = get_user(db, token.id).await?;
+    let cookie = jar.get("session").ok_or(anyhow!("unauthorized session."))?;
+    let sessions = SESSIONS.read().await;
+    let session = sessions
+        .get(cookie.value())
+        .ok_or(anyhow!("invalid or expired session."))?;
+
+    let user = get_user(db, session.id).await?;
 
     if !user.enabled {
         bail!("disabled user.");
-    }
-
-    if token.random != user.random {
-        bail!("random not match.");
     }
 
     Ok(user)
@@ -161,10 +127,6 @@ pub fn verify_password(password: &str, hash: &str) -> Result<bool> {
     Ok(Argon2::default()
         .verify_password(password.as_bytes(), &hash)
         .is_ok())
-}
-
-pub fn generate_random() -> String {
-    uuid::Uuid::new_v4().as_simple().to_string()
 }
 
 pub async fn remove_user(db: &Db, id: i32) -> Result<()> {
@@ -201,7 +163,6 @@ pub async fn initialize_superuser(rocket: Rocket<Build>) -> Rocket<Build> {
             enabled: true,
             role: UserRole::Superuser,
             nickname: None,
-            random: generate_random(),
         };
 
         add_user(&db, user).await.expect("failed to add superuser.");
@@ -214,9 +175,11 @@ pub async fn initialize_superuser(rocket: Rocket<Build>) -> Rocket<Build> {
 
 pub fn stage() -> AdHoc {
     AdHoc::on_ignite("Function - User", |rocket| async {
-        rocket.attach(AdHoc::on_ignite(
-            "Initialize Superuser",
-            initialize_superuser,
-        ))
+        rocket
+            .attach(AdHoc::on_ignite(
+                "Initialize Superuser",
+                initialize_superuser,
+            ))
+            .attach(AdHoc::on_ignite("Initialize User Function", initialize))
     })
 }

@@ -4,28 +4,28 @@ use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use validator::Validate;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum Key {
-    KeyPair { privkey: String, pubkey: String },
-    Passphrase { passphrase: String },
-}
-
 fn default_expiry() -> Duration {
     Duration::from_secs(12 * 60 * 60)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct JWTConfig {
-    pub algo: jsonwebtoken::Algorithm,
-    pub key: Key,
+pub struct SessionConfig {
     #[serde(default = "default_expiry")]
     pub expiry: Duration,
 }
 
+impl Default for SessionConfig {
+    fn default() -> Self {
+        Self {
+            expiry: default_expiry(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct Config {
-    pub jwt: JWTConfig,
+    #[serde(default)]
+    pub session: SessionConfig,
     #[serde(default)]
     pub no_verify: bool,
 }

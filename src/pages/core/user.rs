@@ -28,8 +28,8 @@ use crate::{
         challenge::is_publicly_available,
         event::is_available as is_event_available,
         user::{
-            auth_session as functional_auth_session, destroy_session, generate_random,
-            hash_password, new_session, verify_password,
+            auth_session as functional_auth_session, destroy_session, hash_password, new_session,
+            verify_password,
         },
     },
     pages::{auth_session, Error, Result, ResultFlashExt},
@@ -224,9 +224,6 @@ async fn edit(jar: &CookieJar<'_>, db: Db, info: Form<Edit<'_>>) -> Result<Flash
         nickname: Some(info.nickname)
             .filter(|s| !s.is_empty())
             .map(|s| s.to_string()),
-        random: new_password
-            .then(generate_random)
-            .unwrap_or_else(|| user.random.to_string()),
     };
 
     update_user(&db, new_user)
@@ -262,7 +259,10 @@ async fn login(jar: &CookieJar<'_>, db: Db, login: Form<Login<'_>>) -> Result<Re
             .flash_expect(uri!(ROOT, login_page), "校验密码失败")?;
 
         if valid {
-            new_session(jar, &user).flash_expect(uri!(ROOT, login_page), "创建 Token 失败")?;
+            new_session(jar, &user)
+                .await
+                .flash_expect(uri!(ROOT, login_page), "创建 Session 失败")?;
+
             return Ok(Redirect::to(uri!(ROOT, index)));
         }
     }
@@ -302,7 +302,6 @@ async fn register(db: Db, info: Form<Register<'_>>) -> Result<Flash<Redirect>> {
         nickname: Some(info.nickname)
             .filter(|s| !s.is_empty())
             .map(|s| s.to_string()),
-        random: generate_random(),
     };
 
     add_user(&db, user)
@@ -319,8 +318,8 @@ async fn register(db: Db, info: Form<Register<'_>>) -> Result<Flash<Redirect>> {
 }
 
 #[get("/logout")]
-fn logout(jar: &CookieJar<'_>) -> Redirect {
-    destroy_session(jar);
+async fn logout(jar: &CookieJar<'_>) -> Redirect {
+    _ = destroy_session(jar).await;
 
     Redirect::to(uri!(super::root::ROOT, super::root::index))
 }

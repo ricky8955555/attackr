@@ -13,7 +13,7 @@ use crate::{
         query::user::{get_user, get_user_by_username, list_users, update_user},
         Db,
     },
-    functions::user::{generate_random, hash_password, remove_user},
+    functions::user::{hash_password, remove_user},
     pages::{auth_session, Error, Result, ResultFlashExt},
     utils::query::QueryResultExt,
 };
@@ -37,7 +37,6 @@ struct UserInfo<'r> {
     pub nickname: &'r str,
     pub enabled: bool,
     pub role: UserRole,
-    pub random: bool,
 }
 
 #[get("/")]
@@ -154,10 +153,6 @@ async fn edit(
         nickname: Some(info.nickname)
             .filter(|s| !s.is_empty())
             .map(|s| s.to_string()),
-        random: info
-            .random
-            .then(generate_random)
-            .unwrap_or_else(|| user.random.to_string()),
     };
 
     update_user(&db, new_user)

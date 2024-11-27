@@ -30,6 +30,7 @@ koto_json = { version = "0.14.1", optional = true }
 koto_random = { version = "0.14.1", optional = true }
 koto_tempfile = { version = "0.14.1", optional = true }
 log = "0.4.22"
+moka = { version = "0.12.8", features = ["future"] }
 num_enum = "0.7.3"
 rocket = { version = "0.5.1", features = ["json"] }
 rocket_dyn_templates = { version = "0.2.0", features = ["minijinja"] }

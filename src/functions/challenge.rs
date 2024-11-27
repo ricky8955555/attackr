@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashSet,
     fs::File,
     io::Read,
     net::SocketAddr,
@@ -10,8 +10,10 @@ use std::{
 
 use anyhow::{anyhow, bail, Result};
 use either::Either;
+use futures_util::FutureExt;
 use koto::prelude::*;
-use rocket::{fairing::AdHoc, fs::TempFile, Build, Rocket};
+use moka::{future::Cache, notification::ListenerFuture};
+use rocket::{fairing::AdHoc, fs::TempFile};
 use tokio::{
     fs,
     sync::{Mutex, RwLock},
@@ -46,8 +48,6 @@ use crate::{
 
 use super::event::primitive_now;
 
-const CHECK_CYCLE: Duration = Duration::from_secs(5);
-
 #[derive(Clone, Debug)]
 struct DockerInstance {
     info: RunDockerResult,
@@ -61,9 +61,6 @@ pub struct DockerInstanceInfo {
 }
 
 type ArtifactIndex = (i32, i32, usize);
-
-static DOCKER_INSTANCES: LazyLock<RwLock<HashMap<ArtifactIndex, DockerInstance>>> =
-    LazyLock::new(|| RwLock::new(HashMap::new()));
 
 #[allow(clippy::type_complexity)]
 static BUILDING: LazyLock<RwLock<HashSet<(Option<i32>, i32)>>> =
@@ -87,36 +84,26 @@ static DYNPOINTS_INSTANCE: LazyLock<Option<Mutex<KotoScript>>> = LazyLock::new(|
     None
 });
 
-async fn docker_instance_check() {
-    loop {
-        let now = Instant::now();
-        let mut expired = Vec::new();
-
-        {
-            let instances = DOCKER_INSTANCES.read().await;
-
-            for (key, instance) in instances.iter() {
-                if let Some(stop_at) = instance.stop_at {
-                    if now >= stop_at {
-                        expired.push(*key);
-                    }
-                }
+static DOCKER_INSTANCES: LazyLock<Cache<ArtifactIndex, DockerInstance>> = LazyLock::new(|| {
+    let eviction_listener = move |_, v: DockerInstance, _| -> ListenerFuture {
+        async move {
+            if let Err(e) = conductor::stop_docker(&v.info.id).await {
+                log::error!(target: "challenge", "failed to stop docker on eviction: {e:?}")
             }
         }
+        .boxed()
+    };
 
-        for (user, challenge, artifact) in expired {
-            _ = stop_docker(user, challenge, artifact).await;
-        }
+    let mut builder = Cache::builder()
+        .async_eviction_listener(eviction_listener)
+        .support_invalidation_closures();
 
-        tokio::time::sleep(CHECK_CYCLE).await;
+    if let Some(expiry) = CONFIG.docker.expiry {
+        builder = builder.time_to_live(expiry)
     }
-}
 
-pub async fn initialize(rocket: Rocket<Build>) -> Rocket<Build> {
-    tokio::spawn(docker_instance_check());
-
-    rocket
-}
+    builder.build()
+});
 
 pub async fn uninitialize() {
     _ = stop_all_active_sessions().await;
@@ -124,19 +111,14 @@ pub async fn uninitialize() {
 
 pub fn stage() -> AdHoc {
     AdHoc::on_ignite("Function - Challenge", |rocket| async {
-        rocket
-            .attach(AdHoc::on_ignite(
-                "Initialize Challenge Function",
-                initialize,
-            ))
-            .attach(AdHoc::on_shutdown(
-                "Uninitialize Challenge Function",
-                |_| {
-                    Box::pin(async move {
-                        uninitialize().await;
-                    })
-                },
-            ))
+        rocket.attach(AdHoc::on_shutdown(
+            "Uninitialize Challenge Function",
+            |_| {
+                Box::pin(async move {
+                    uninitialize().await;
+                })
+            },
+        ))
     })
 }
 
@@ -331,13 +313,11 @@ pub async fn load_build_info(db: &Db, id: i32) -> Result<BuildInfo> {
     conductor::load_build_info(source).await
 }
 
-pub async fn clear_artifact(artifact: &ArtifactEntry) -> bool {
-    let stop_sessions_success = stop_active_sessions(artifact.user, artifact.challenge).await;
+pub async fn clear_artifact(artifact: &ArtifactEntry) {
+    stop_active_sessions(artifact.user, artifact.challenge).await;
 
     let path = CONFIG.artifact_root.join(&artifact.path);
-    let clear_artifact_success = conductor::clear_artifact(&path, &artifact.info).await;
-
-    stop_sessions_success && clear_artifact_success
+    conductor::clear_artifact(&path, &artifact.info).await
 }
 
 pub async fn remove_challenge(db: &Db, id: i32) -> Result<()> {
@@ -420,10 +400,7 @@ pub async fn is_challenge_building(user: Option<i32>, challenge: i32) -> bool {
 }
 
 pub async fn is_docker_running(user: i32, challenge: i32, artifact: usize) -> bool {
-    DOCKER_INSTANCES
-        .read()
-        .await
-        .contains_key(&(user, challenge, artifact))
+    DOCKER_INSTANCES.contains_key(&(user, challenge, artifact))
 }
 
 pub async fn run_docker(db: &Db, user: i32, challenge: i32, artifact: usize) -> Result<()> {
@@ -461,9 +438,8 @@ pub async fn run_docker(db: &Db, user: i32, challenge: i32, artifact: usize) -> 
             let instance = DockerInstance { info, stop_at };
 
             DOCKER_INSTANCES
-                .write()
-                .await
-                .insert((user, challenge, artifact), instance);
+                .insert((user, challenge, artifact), instance)
+                .await;
 
             DOCKER_PREPARING
                 .write()
@@ -485,67 +461,30 @@ pub async fn run_docker(db: &Db, user: i32, challenge: i32, artifact: usize) -> 
     result
 }
 
-pub async fn stop_docker(user: i32, challenge: i32, artifact: usize) -> Result<()> {
-    let id = DOCKER_INSTANCES
-        .read()
-        .await
-        .get(&(user, challenge, artifact))
-        .ok_or_else(|| anyhow!("docker instance not found."))?
-        .info
-        .id
-        .clone();
-
-    conductor::stop_docker(&id).await?;
-
-    let mut instances = DOCKER_INSTANCES.write().await;
-
-    instances.remove(&(user, challenge, artifact));
-
-    Ok(())
+pub async fn stop_docker(user: i32, challenge: i32, artifact: usize) {
+    DOCKER_INSTANCES
+        .invalidate(&(user, challenge, artifact))
+        .await;
 }
 
-pub async fn stop_dockers(user: Option<i32>, challenge: i32) -> bool {
-    let dockers: Vec<_> = DOCKER_INSTANCES
-        .read()
-        .await
-        .iter()
-        .filter(|(k, _)| user.map(|x| k.0 == x).unwrap_or(true) && k.1 == challenge)
-        .map(|(k, v)| (*k, v.info.id.clone()))
-        .collect();
-
-    let mut success = true;
-
-    for (key, id) in dockers {
-        if conductor::stop_docker(&id).await.is_err() {
-            success = false;
-        }
-
-        DOCKER_INSTANCES.write().await.remove(&key);
-    }
-
-    success
+pub async fn stop_dockers(user: Option<i32>, challenge: i32) {
+    DOCKER_INSTANCES
+        .invalidate_entries_if(move |k, _| {
+            user.map(|x| k.0 == x).unwrap_or(true) && k.1 == challenge
+        })
+        .expect("invalidation closure enabled");
 }
 
-pub async fn stop_all_dockers() -> bool {
-    let mut success = true;
-
-    for instance in DOCKER_INSTANCES.read().await.values() {
-        if conductor::stop_docker(&instance.info.id).await.is_err() {
-            success = false;
-        }
-    }
-
-    DOCKER_INSTANCES.write().await.clear();
-
-    success
+pub async fn stop_all_dockers() {
+    DOCKER_INSTANCES.invalidate_all();
 }
 
-pub async fn stop_active_sessions(user: Option<i32>, challenge: i32) -> bool {
-    stop_dockers(user, challenge).await
+pub async fn stop_active_sessions(user: Option<i32>, challenge: i32) {
+    stop_dockers(user, challenge).await;
 }
 
-pub async fn stop_all_active_sessions() -> bool {
-    stop_all_dockers().await
+pub async fn stop_all_active_sessions() {
+    stop_all_dockers().await;
 }
 
 fn mapped_addr(addr: &MappedAddr, port: u16) -> SocketAddr {
@@ -572,10 +511,9 @@ pub async fn get_docker_instance_info(
     challenge: i32,
     artifact: usize,
 ) -> Result<DockerInstanceInfo> {
-    let instances = DOCKER_INSTANCES.read().await;
-
-    let instance = instances
+    let instance = DOCKER_INSTANCES
         .get(&(user, challenge, artifact))
+        .await
         .ok_or_else(|| anyhow!("docker instance not found."))?;
 
     let expiry = instance.stop_at.map(|stop_at| {

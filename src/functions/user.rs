@@ -1,16 +1,12 @@
-use std::{
-    collections::HashMap,
-    sync::LazyLock,
-    time::{Duration, Instant},
-};
+use std::sync::LazyLock;
 
 use anyhow::{anyhow, bail, Result};
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
+use moka::future::Cache;
 use rocket::{fairing::AdHoc, http::CookieJar, Build, Rocket};
-use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use crate::{
@@ -26,59 +22,16 @@ use crate::{
     functions::challenge::clear_artifact,
 };
 
-const CHECK_CYCLE: Duration = Duration::from_secs(5);
-
-#[derive(Debug, Clone)]
-struct Session {
-    id: i32,
-    expiry: Instant,
-}
-
-static SESSIONS: LazyLock<RwLock<HashMap<String, Session>>> =
-    LazyLock::new(|| RwLock::new(HashMap::new()));
-
-async fn session_check() {
-    loop {
-        {
-            let mut sessions = SESSIONS.write().await;
-
-            let now = Instant::now();
-            let mut expired = Vec::new();
-
-            for (id, session) in sessions.iter() {
-                if now >= session.expiry {
-                    expired.push(id.clone());
-                }
-            }
-
-            for id in expired {
-                sessions.remove(&id);
-            }
-        }
-
-        tokio::time::sleep(CHECK_CYCLE).await;
-    }
-}
-
-pub async fn initialize(rocket: Rocket<Build>) -> Rocket<Build> {
-    tokio::spawn(session_check());
-
-    rocket
-}
+static SESSIONS: LazyLock<Cache<String, i32>> =
+    LazyLock::new(|| Cache::builder().time_to_live(CONFIG.session.expiry).build());
 
 async fn create_session(user: &User) -> Result<String> {
     if !user.enabled {
         bail!("disabled user.");
     }
 
-    let expiry = Instant::now() + CONFIG.session.expiry;
-    let session = Session {
-        id: user.id.unwrap(),
-        expiry,
-    };
     let id = Uuid::new_v4().as_simple().to_string();
-
-    SESSIONS.write().await.insert(id.clone(), session);
+    SESSIONS.insert(id.clone(), user.id.unwrap()).await;
 
     Ok(id)
 }
@@ -91,19 +44,20 @@ pub async fn new_session(jar: &CookieJar<'_>, user: &User) -> Result<()> {
 
 pub async fn destroy_session(jar: &CookieJar<'_>) -> Result<()> {
     let cookie = jar.get("session").ok_or(anyhow!("unauthorized session."))?;
-    SESSIONS.write().await.remove(cookie.value());
+    SESSIONS.invalidate(cookie.value()).await;
     jar.remove("session");
     Ok(())
 }
 
 pub async fn auth_session(db: &Db, jar: &CookieJar<'_>) -> Result<User> {
     let cookie = jar.get("session").ok_or(anyhow!("unauthorized session."))?;
-    let sessions = SESSIONS.read().await;
-    let session = sessions
+
+    let id = SESSIONS
         .get(cookie.value())
+        .await
         .ok_or(anyhow!("invalid or expired session."))?;
 
-    let user = get_user(db, session.id).await?;
+    let user = get_user(db, id).await?;
 
     if !user.enabled {
         bail!("disabled user.");
@@ -175,11 +129,9 @@ pub async fn initialize_superuser(rocket: Rocket<Build>) -> Rocket<Build> {
 
 pub fn stage() -> AdHoc {
     AdHoc::on_ignite("Function - User", |rocket| async {
-        rocket
-            .attach(AdHoc::on_ignite(
-                "Initialize Superuser",
-                initialize_superuser,
-            ))
-            .attach(AdHoc::on_ignite("Initialize User Function", initialize))
+        rocket.attach(AdHoc::on_ignite(
+            "Initialize Superuser",
+            initialize_superuser,
+        ))
     })
 }

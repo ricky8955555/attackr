@@ -125,23 +125,16 @@ async fn delete(jar: &CookieJar<'_>, db: Db, id: i32) -> Result<Flash<Redirect>>
         .user
         .flash_expect(uri!(ROOT, detail(id)), "禁止删除静态产物")?;
 
-    let cleared = clear_artifact(&artifact).await;
+    clear_artifact(&artifact).await;
 
     delete_artifact(&db, id)
         .await
         .flash_expect(uri!(ROOT, index), "删除产物失败")?;
 
-    if cleared {
-        Ok(Flash::success(
-            Redirect::to(uri!(ROOT, index)),
-            "清理并删除产物成功",
-        ))
-    } else {
-        Ok(Flash::warning(
-            Redirect::to(uri!(ROOT, index)),
-            "删除产物成功，但清理产物时发生错误",
-        ))
-    }
+    Ok(Flash::success(
+        Redirect::to(uri!(ROOT, index)),
+        "删除产物成功",
+    ))
 }
 
 pub fn stage() -> AdHoc {

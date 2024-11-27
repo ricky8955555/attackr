@@ -463,24 +463,22 @@ async fn remove_docker_artifact(artifact: &DockerArtifact) -> Result<()> {
     Ok(())
 }
 
-pub async fn clear_artifact<P: AsRef<Path>>(path: P, artifacts: &[Artifact]) -> bool {
-    let mut success = true;
-
-    if fs::remove_dir_all(&path).await.is_err() {
-        success = false;
+pub async fn clear_artifact<P: AsRef<Path>>(path: P, artifacts: &[Artifact]) {
+    if let Err(e) = fs::remove_dir_all(&path).await {
+        log::error!(target: "conductor", "failed to remove dir: {e:?}")
     }
 
     for artifact in artifacts {
         #[allow(clippy::single_match)]
-        if !(match artifact {
-            Artifact::Docker(artifact) => remove_docker_artifact(artifact).await.is_ok(),
-            _ => true,
-        }) {
-            success = false;
+        match artifact {
+            Artifact::Docker(artifact) => {
+                if let Err(e) = remove_docker_artifact(artifact).await {
+                    log::error!(target: "conductor", "failed to remove docker artifact: {e:?}")
+                }
+            }
+            _ => {}
         }
     }
-
-    success
 }
 
 pub async fn build<P, Q>(source: P, target: Q, erase: bool, flag: &str) -> Result<BuildResult>

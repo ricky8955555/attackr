@@ -314,13 +314,11 @@ async fn artifact_docker_stop(
         .resp_expect("获取题目失败")?;
     check_challenge_availability(&user, &entry)?;
 
-    stop_docker(user.id.unwrap(), challenge, artifact)
-        .await
-        .flash_expect(uri!(ROOT, detail(challenge)), "停止容器失败")?;
+    stop_docker(user.id.unwrap(), challenge, artifact).await;
 
     Ok(Flash::success(
         Redirect::to(uri!(ROOT, detail(challenge))),
-        "停止容器成功",
+        "请求停止容器成功",
     ))
 }
 

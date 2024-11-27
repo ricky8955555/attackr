@@ -13,7 +13,7 @@ use crate::{
         query::user::{get_user, get_user_by_username, list_users, update_user},
         Db,
     },
-    functions::user::{hash_password, remove_user},
+    functions::user::{hash_password, invalidate_user_sessions, remove_user},
     pages::{auth_session, Error, Result, ResultFlashExt},
     utils::query::QueryResultExt,
 };
@@ -37,6 +37,7 @@ struct UserInfo<'r> {
     pub nickname: &'r str,
     pub enabled: bool,
     pub role: UserRole,
+    pub invalidate: bool,
 }
 
 #[get("/")]
@@ -158,6 +159,10 @@ async fn edit(
     update_user(&db, new_user)
         .await
         .flash_expect(uri!(ROOT, index), "修改用户信息失败")?;
+
+    if info.invalidate {
+        invalidate_user_sessions(id);
+    }
 
     Ok(Flash::success(
         Redirect::to(uri!(ROOT, index)),

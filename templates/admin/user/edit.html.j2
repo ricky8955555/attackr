@@ -39,6 +39,10 @@
     </select>
   </div>
   <div class="form-check mb-3">
+    <input class="form-check-input" type="checkbox" name="invalidate" value="true">
+    <label class="form-check-label">注销用户所有会话</label>
+  </div>
+  <div class="form-check mb-3">
     <input class="form-check-input" type="checkbox" name="enabled" value="true" {% if user.enabled %}checked{% endif %}>
     <label class="form-check-label">启用</label>
   </div>

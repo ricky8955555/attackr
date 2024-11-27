@@ -22,8 +22,12 @@ use crate::{
     functions::challenge::clear_artifact,
 };
 
-static SESSIONS: LazyLock<Cache<String, i32>> =
-    LazyLock::new(|| Cache::builder().time_to_live(CONFIG.session.expiry).build());
+static SESSIONS: LazyLock<Cache<String, i32>> = LazyLock::new(|| {
+    Cache::builder()
+        .support_invalidation_closures()
+        .time_to_live(CONFIG.session.expiry)
+        .build()
+});
 
 async fn create_session(user: &User) -> Result<String> {
     if !user.enabled {
@@ -47,6 +51,12 @@ pub async fn destroy_session(jar: &CookieJar<'_>) -> Result<()> {
     SESSIONS.invalidate(cookie.value()).await;
     jar.remove("session");
     Ok(())
+}
+
+pub fn invalidate_user_sessions(user: i32) {
+    SESSIONS
+        .invalidate_entries_if(move |_, v| v == &user)
+        .expect("invalidation closure enabled");
 }
 
 pub async fn auth_session(db: &Db, jar: &CookieJar<'_>) -> Result<User> {

@@ -28,8 +28,8 @@ use crate::{
         challenge::is_publicly_available,
         event::is_available as is_event_available,
         user::{
-            auth_session as functional_auth_session, destroy_session, hash_password, new_session,
-            verify_password,
+            auth_session as functional_auth_session, destroy_session, hash_password,
+            invalidate_user_sessions, new_session, verify_password,
         },
     },
     pages::{auth_session, Error, Result, ResultFlashExt},
@@ -231,6 +231,8 @@ async fn edit(jar: &CookieJar<'_>, db: Db, info: Form<Edit<'_>>) -> Result<Flash
         .flash_expect(uri!(ROOT, edit_page), "修改信息失败")?;
 
     if new_password {
+        invalidate_user_sessions(user.id.unwrap());
+
         Ok(Flash::success(
             Redirect::to(uri!(ROOT, login_page)),
             "修改信息成功，修改密码后需重新登录",

@@ -94,9 +94,7 @@ static DOCKER_INSTANCES: LazyLock<Cache<ArtifactIndex, DockerInstance>> = LazyLo
         .boxed()
     };
 
-    let mut builder = Cache::builder()
-        .async_eviction_listener(eviction_listener)
-        .support_invalidation_closures();
+    let mut builder = Cache::builder().async_eviction_listener(eviction_listener);
 
     if let Some(expiry) = CONFIG.docker.expiry {
         builder = builder.time_to_live(expiry)
@@ -106,7 +104,7 @@ static DOCKER_INSTANCES: LazyLock<Cache<ArtifactIndex, DockerInstance>> = LazyLo
 });
 
 pub async fn uninitialize() {
-    _ = stop_all_active_sessions().await;
+    stop_all_active_sessions().await;
 }
 
 pub fn stage() -> AdHoc {
@@ -324,7 +322,7 @@ pub async fn remove_challenge(db: &Db, id: i32) -> Result<()> {
     let artifacts = list_challenge_artifacts(db, id).await?;
 
     for artifact in artifacts {
-        _ = clear_artifact(&artifact).await;
+        clear_artifact(&artifact).await;
     }
 
     let challenge = get_challenge(db, id).await?;
@@ -382,7 +380,7 @@ pub async fn build_challenge(db: &Db, user: Option<i32>, challenge: i32) -> Resu
         update_artifact(db, artifact).await?;
 
         if let Ok(artifact) = old_artifact {
-            _ = clear_artifact(&artifact).await;
+            clear_artifact(&artifact).await;
             _ = delete_artifact(db, artifact.id.unwrap()).await;
         }
 
@@ -468,15 +466,17 @@ pub async fn stop_docker(user: i32, challenge: i32, artifact: usize) {
 }
 
 pub async fn stop_dockers(user: Option<i32>, challenge: i32) {
-    DOCKER_INSTANCES
-        .invalidate_entries_if(move |k, _| {
-            user.map(|x| k.0 == x).unwrap_or(true) && k.1 == challenge
-        })
-        .expect("invalidation closure enabled");
+    for (idx, _) in DOCKER_INSTANCES.iter() {
+        if user.map(|x| idx.0 == x).unwrap_or(true) && idx.1 == challenge {
+            DOCKER_INSTANCES.invalidate(&idx).await;
+        }
+    }
 }
 
 pub async fn stop_all_dockers() {
-    DOCKER_INSTANCES.invalidate_all();
+    for (idx, _) in DOCKER_INSTANCES.iter() {
+        DOCKER_INSTANCES.invalidate(&idx).await;
+    }
 }
 
 pub async fn stop_active_sessions(user: Option<i32>, challenge: i32) {
@@ -617,7 +617,7 @@ pub async fn solve_challenge(db: &Db, user: i32, challenge: i32, flag: &str) -> 
 
     if let Some(artifact) = artifact {
         if CONFIG.clear_on_solved && entry.dynamic {
-            _ = clear_artifact(&artifact).await;
+            clear_artifact(&artifact).await;
             _ = delete_artifact(db, artifact.id.unwrap()).await;
         }
     }

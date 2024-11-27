@@ -32,14 +32,14 @@ pub fn format(fmt: &str, args: &[&str]) -> Result<String> {
                             .ok_or_else(|| anyhow!("unmatched number of arguments."))?,
                     );
                 }
-                _ => bail!("unmatched Brace."),
+                _ => bail!("unmatched brace."),
             },
             State::ClosingBrace => match c {
                 '}' => {
                     state = State::None;
                     result.push('}');
                 }
-                _ => bail!("unmatched bBrace."),
+                _ => bail!("unmatched brace."),
             },
         }
     }

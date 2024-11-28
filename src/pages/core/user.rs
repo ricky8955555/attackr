@@ -43,36 +43,36 @@ pub const ROOT: Origin<'static> = uri!("/user");
 
 #[derive(Debug, Clone, FromForm, Validate)]
 struct Login<'r> {
-    #[field(validate = with(|x| (3..=25).contains(&x.len()) && x.chars().all(|c| c.is_ascii_alphanumeric()), "invalid username"))]
+    #[field(validate = with(|x| (3..=25).contains(&x.chars().count()) && x.chars().all(|c| c.is_ascii_alphanumeric()), "invalid username"))]
     pub username: &'r str,
-    #[field(validate = len(6..))]
+    #[field(validate = with(|x| (6..).contains(&x.chars().count()), "password too short"))]
     pub password: &'r str,
 }
 
 #[derive(Debug, Clone, FromForm, Validate)]
 struct Register<'r> {
-    #[field(validate = with(|x| (3..=25).contains(&x.len()) && x.chars().all(|c| c.is_ascii_alphanumeric()), "invalid username"))]
+    #[field(validate = with(|x| (3..=25).contains(&x.chars().count()) && x.chars().all(|c| c.is_ascii_alphanumeric()), "invalid username"))]
     pub username: &'r str,
-    #[field(validate = len(6..))]
+    #[field(validate = with(|x| (6..).contains(&x.chars().count()), "password too short"))]
     pub password: &'r str,
     #[field(validate = contains('@'))]
     pub email: &'r str,
     #[field(validate = len(1..))]
     pub contact: &'r str,
-    #[field(validate = len(..=60))]
+    #[field(validate = with(|x| (..=60).contains(&x.chars().count()), "nickname too long"))]
     pub nickname: &'r str,
 }
 
 #[derive(Debug, Clone, FromForm, Validate)]
 struct Edit<'r> {
-    #[field(validate = with(|x| x.is_empty() || (3..=25).contains(&x.len()) && x.chars().all(|c| c.is_ascii_alphanumeric()), "invalid username"))]
+    #[field(validate = with(|x| x.is_empty() || (3..=25).contains(&x.chars().count()) && x.chars().all(|c| c.is_ascii_alphanumeric()), "invalid username"))]
     pub username: &'r str,
-    #[field(validate = with(|x| x.is_empty() || (6..).contains(&x.len()), "password too short"))]
+    #[field(validate = with(|x| x.is_empty() || (6..).contains(&x.chars().count()), "password too short"))]
     pub password: &'r str,
     #[field(validate = with(|x| x.is_empty() || x.contains('@'), "incorrect email"))]
     pub email: &'r str,
     pub contact: &'r str,
-    #[field(validate = with(|x| x.is_empty() || (..=60).contains(&x.len()), "nickname too long"))]
+    #[field(validate = with(|x| x.is_empty() || (..=60).contains(&x.chars().count()), "nickname too long"))]
     pub nickname: &'r str,
 }
 

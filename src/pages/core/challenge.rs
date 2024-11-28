@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, collections::HashMap};
+use std::{cmp::Ordering, collections::HashMap, io::Cursor};
 
 use itertools::Itertools;
 use rocket::{
@@ -10,6 +10,7 @@ use rocket::{
 };
 use rocket_dyn_templates::{context, Template};
 use time::OffsetDateTime;
+use tokio::fs::File;
 
 use crate::{
     core::conductor::Artifact,
@@ -30,8 +31,8 @@ use crate::{
     functions::{
         challenge::{
             build_challenge, get_docker_instance_info, is_challenge_building, is_docker_running,
-            is_publicly_available, open_attachment, open_binary, run_docker, solve_challenge,
-            stop_docker,
+            is_publicly_available, open_attachment, open_binary, open_docker_states, run_docker,
+            solve_challenge, stop_docker,
         },
         event::cmp_period,
         user::is_admin,
@@ -236,7 +237,7 @@ async fn artifact_binary(
     db: Db,
     challenge: i32,
     artifact: usize,
-) -> Result<NamedFile> {
+) -> Result<NamedFile<File>> {
     let user = auth_session(&db, jar).await?;
     check_event_availability(Some(&user))?;
 
@@ -258,7 +259,7 @@ async fn attachment(
     db: Db,
     challenge: i32,
     attachment: usize,
-) -> Result<NamedFile> {
+) -> Result<NamedFile<File>> {
     let user = auth_session(&db, jar).await?;
     check_event_availability(Some(&user))?;
 
@@ -318,8 +319,30 @@ async fn artifact_docker_stop(
 
     Ok(Flash::success(
         Redirect::to(uri!(ROOT, detail(challenge))),
-        "请求停止容器成功",
+        "停止容器成功",
     ))
+}
+
+#[get("/<challenge>/artifact/docker/<artifact>/states")]
+async fn artifact_docker_states(
+    jar: &CookieJar<'_>,
+    db: Db,
+    challenge: i32,
+    artifact: usize,
+) -> Result<NamedFile<Cursor<Vec<u8>>>> {
+    let user = auth_session(&db, jar).await?;
+    check_event_availability(Some(&user))?;
+
+    let entry = get_challenge(&db, challenge)
+        .await
+        .resp_expect("获取题目失败")?;
+    check_challenge_availability(&user, &entry)?;
+
+    let file = open_docker_states(user.id.unwrap(), challenge, artifact)
+        .await
+        .flash_expect(uri!(ROOT, detail(challenge)), "获取构建产物失败")?;
+
+    Ok(file)
 }
 
 #[post("/<id>/solve", data = "<solve>")]
@@ -380,7 +403,8 @@ pub fn stage() -> AdHoc {
         attachment,
         artifact_binary,
         artifact_docker_run,
-        artifact_docker_stop
+        artifact_docker_stop,
+        artifact_docker_states,
     ];
 
     AdHoc::on_ignite("Core Pages - Challenge", |rocket| async {

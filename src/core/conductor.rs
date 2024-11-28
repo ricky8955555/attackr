@@ -17,10 +17,12 @@ use std::{
     net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener},
     ops::RangeInclusive,
     path::Path,
+    sync::LazyLock,
 };
 use tokio::{
     fs::{self, File},
     io::{AsyncReadExt, AsyncWriteExt},
+    sync::RwLock,
 };
 use validator::Validate;
 
@@ -105,7 +107,11 @@ pub struct BuildInfo {
 pub struct RunDockerResult {
     pub id: String,
     pub ports: HashMap<String, u16>,
+    pub states: Box<Path>,
 }
+
+static STATES: LazyLock<RwLock<HashMap<String, TempDir>>> =
+    LazyLock::new(|| RwLock::new(HashMap::new()));
 
 fn default_addrs() -> Vec<IpAddr> {
     vec![
@@ -366,6 +372,7 @@ pub async fn run_docker(
     options: &DockerRunOptions,
 ) -> Result<RunDockerResult> {
     options.validate()?;
+    let states = TempDir::new().await?;
 
     let ports: HashMap<_, _> = artifact
         .config
@@ -408,11 +415,19 @@ pub async fn run_docker(
         .clone()
         .map(|size| HashMap::from([("size".to_string(), size)]));
 
+    let binds = vec![format!(
+        "{}:/var/lib/attackr",
+        states
+            .to_str()
+            .ok_or_else(|| anyhow!("inconvertible path."))?
+    )];
+
     let host_config = HostConfig {
         port_bindings: Some(port_bindings),
         publish_all_ports: Some(false),
         cpu_quota: options.cpus.map(|x| (x * 100000.0).round() as i64),
         memory: options.memory,
+        binds: Some(binds),
         storage_opt,
         ..Default::default()
     };
@@ -429,13 +444,20 @@ pub async fn run_docker(
         .start_container(&created.id, None::<StartContainerOptions<&str>>)
         .await?;
 
+    let path = states.dir_path().clone().into_boxed_path();
+
+    STATES.write().await.insert(created.id.clone(), states);
+
     Ok(RunDockerResult {
         id: created.id,
+        states: path,
         ports,
     })
 }
 
 pub async fn stop_docker(id: &str) -> Result<()> {
+    STATES.write().await.remove(id);
+
     let docker = Docker::connect_with_defaults()?;
 
     let options = RemoveContainerOptions {

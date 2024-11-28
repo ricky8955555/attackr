@@ -46,7 +46,7 @@
 {% if artifact %}
 <div class="mb-5">
   <h5 class="mb-3">产物</h5>
-  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4">
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3">
     {% for artifact in artifact.info %}
     <div class="col mb-3">
       <div class="card">
@@ -70,6 +70,7 @@
           <br>
           {% endif %}
           <a href="/challenge/{{ challenge.id }}/artifact/docker/{{ loop.index0 }}/stop" class="btn btn-danger">停止</a>
+          <a href="/challenge/{{ challenge.id }}/artifact/docker/{{ loop.index0 }}/states" class="btn btn-outline-primary">获取状态文件</a>
           {% else %}
           <a href="/challenge/{{ challenge.id }}/artifact/docker/{{ loop.index0 }}/run" class="btn btn-primary">启动</a>
           {% endif %}

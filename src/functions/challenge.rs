@@ -1,7 +1,7 @@
 use std::{
     collections::HashSet,
-    fs::File,
-    io::Read,
+    fs::File as StdFile,
+    io::{Cursor, Read},
     net::SocketAddr,
     path::PathBuf,
     sync::LazyLock,
@@ -10,12 +10,13 @@ use std::{
 
 use anyhow::{anyhow, bail, Result};
 use either::Either;
+use flate2::{write::GzEncoder, Compression};
 use futures_util::FutureExt;
 use koto::prelude::*;
 use moka::{future::Cache, notification::ListenerFuture};
-use rocket::{fairing::AdHoc, fs::TempFile};
+use rocket::{fairing::AdHoc, fs::TempFile as RocketTempFile};
 use tokio::{
-    fs,
+    fs::{self, File},
     sync::{Mutex, RwLock},
 };
 
@@ -72,7 +73,7 @@ static DOCKER_PREPARING: LazyLock<RwLock<HashSet<ArtifactIndex>>> =
 static DYNPOINTS_INSTANCE: LazyLock<Option<Mutex<KotoScript>>> = LazyLock::new(|| {
     if let Some(path) = &CONFIG.dynpoints {
         let mut buf = Vec::new();
-        let mut file = File::open(path).expect("open file");
+        let mut file = StdFile::open(path).expect("open file");
         file.read_to_end(&mut buf).expect("read file");
 
         let code = String::from_utf8_lossy(&buf);
@@ -239,8 +240,8 @@ pub async fn recalculate_points(db: &Db) -> Result<()> {
 }
 
 pub async fn save_files(
-    source: Option<TempFile<'_>>,
-    attachments: Vec<TempFile<'_>>,
+    source: Option<RocketTempFile<'_>>,
+    attachments: Vec<RocketTempFile<'_>>,
 ) -> Result<(String, Vec<String>)> {
     let name = uuid::Uuid::new_v4().hyphenated().to_string();
     let path = CONFIG.challenge_root.join(&name);
@@ -279,8 +280,8 @@ pub async fn save_files(
 
         if let Some(source) = source {
             let source = match source {
-                TempFile::File { path, .. } => Either::Left(std::fs::File::open(path)?),
-                TempFile::Buffered { content } => Either::Right(content),
+                RocketTempFile::File { path, .. } => Either::Left(StdFile::open(path)?),
+                RocketTempFile::Buffered { content } => Either::Right(content),
             };
 
             let source_dir = path.join("source");
@@ -546,7 +547,12 @@ pub async fn get_docker_instance_info(
     Ok(DockerInstanceInfo { expiry, ports })
 }
 
-pub async fn open_binary(db: &Db, user: i32, challenge: i32, artifact: usize) -> Result<NamedFile> {
+pub async fn open_binary(
+    db: &Db,
+    user: i32,
+    challenge: i32,
+    artifact: usize,
+) -> Result<NamedFile<File>> {
     let entry = get_challenge(db, challenge).await?;
     let entry = get_artifact(db, challenge, entry.dynamic.then_some(user)).await?;
 
@@ -563,7 +569,11 @@ pub async fn open_binary(db: &Db, user: i32, challenge: i32, artifact: usize) ->
     bail!("unexpected artifact type got.");
 }
 
-pub async fn open_attachment(db: &Db, challenge: i32, attachment: usize) -> Result<NamedFile> {
+pub async fn open_attachment(
+    db: &Db,
+    challenge: i32,
+    attachment: usize,
+) -> Result<NamedFile<File>> {
     let challenge = get_challenge(db, challenge).await?;
 
     let attachment = (*challenge.attachments)
@@ -577,6 +587,29 @@ pub async fn open_attachment(db: &Db, challenge: i32, attachment: usize) -> Resu
         .join(attachment);
 
     Ok(NamedFile::open(path).await?)
+}
+
+pub async fn open_docker_states(
+    user: i32,
+    challenge: i32,
+    artifact: usize,
+) -> Result<NamedFile<Cursor<Vec<u8>>>> {
+    let instance = DOCKER_INSTANCES
+        .get(&(user, challenge, artifact))
+        .await
+        .ok_or_else(|| anyhow!("docker instance not found."))?;
+
+    let mut tarfile = Vec::new();
+
+    {
+        let enc = GzEncoder::new(&mut tarfile, Compression::default());
+        let mut tar = tar::Builder::new(enc);
+        tar.append_dir_all("", &instance.info.states)?;
+        tar.finish()?;
+    }
+
+    let filename = format!("states-{}.tar.gz", instance.info.id);
+    Ok(NamedFile::with_name(&filename, Cursor::new(tarfile)))
 }
 
 pub async fn solve_challenge(db: &Db, user: i32, challenge: i32, flag: &str) -> Result<bool> {

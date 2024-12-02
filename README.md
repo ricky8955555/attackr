@@ -55,6 +55,7 @@ attackr 是使用 [Rust](https://www.rust-lang.org) + [Rocket](https://rocket.rs
     - 可配置 Docker 端口映射 (仅作为对用户的显示，并不能实现功能上的映射)
     - 可配置 Docker 容器自动销毁时间
     - 可限制 Docker 的 CPU、内存、储存占用
+    - 可通过 Bind 挂载的 `/var/lib/attackr` 公开 Docker 容器相关状态文件 (可用于实现前置认证)
     - 可配置在题目解出后自动清理产物
     - 可配置题目是否公开
     - 可配置是否显示未分类题集的题目

@@ -1,4 +1,5 @@
 use std::{
+    cmp::Ordering,
     collections::HashSet,
     fs::File as StdFile,
     io::{Cursor, Read},
@@ -47,7 +48,7 @@ use crate::{
     utils::{dynfmt, responder::NamedFile, script::KotoScript},
 };
 
-use super::event::primitive_now;
+use super::event::{cmp_period, primitive_now};
 
 #[derive(Clone, Debug)]
 struct DockerInstance {
@@ -191,12 +192,22 @@ async fn recalculate_challenge_points_consumed(db: &Db, mut challenge: Challenge
 
     let now = primitive_now();
 
-    let points = calculate_points(challenge.initial, solved.len() as i64).await?;
+    let effective_solved = solved
+        .iter()
+        .filter(|data| cmp_period(data.1.time) == Ordering::Equal)
+        .count();
+
+    let points = calculate_points(challenge.initial, effective_solved as i64).await?;
     challenge.points = points;
 
     for (idx, data) in solved.into_iter().enumerate() {
-        let factor = calculate_factor(challenge.initial, idx as i64).await?;
-        let value = points * factor;
+        let value = match cmp_period(data.1.time) {
+            Ordering::Equal => {
+                let factor = calculate_factor(challenge.initial, idx as i64).await?;
+                points * factor
+            }
+            _ => 0.0,
+        };
 
         let score = Score {
             id: None,

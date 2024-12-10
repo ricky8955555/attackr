@@ -13,16 +13,14 @@ pub fn primitive_now() -> PrimitiveDateTime {
     PrimitiveDateTime::new(converted.date(), converted.time())
 }
 
-pub fn cmp_period(time: OffsetDateTime) -> Ordering {
+pub fn cmp_period(time: PrimitiveDateTime) -> Ordering {
     if let Some(start) = CONFIG.start_at {
-        let start = start.assume_offset(CONFIG.timezone);
         if time < start {
             return Ordering::Less;
         }
     }
 
     if let Some(end) = CONFIG.end_at {
-        let end = end.assume_offset(CONFIG.timezone);
         if time > end {
             return Ordering::Greater;
         }
@@ -38,7 +36,7 @@ pub fn is_available(user: Option<&User>) -> bool {
         }
     }
 
-    if cmp_period(OffsetDateTime::now_utc()) == Ordering::Less {
+    if cmp_period(primitive_now()) == Ordering::Less {
         return false;
     }
 

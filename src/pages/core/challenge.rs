@@ -9,7 +9,6 @@ use rocket::{
     response::{Flash, Redirect},
 };
 use rocket_dyn_templates::{context, Template};
-use time::OffsetDateTime;
 use tokio::fs::File;
 
 use crate::{
@@ -34,7 +33,7 @@ use crate::{
             is_publicly_available, open_attachment, open_binary, open_docker_states, run_docker,
             solve_challenge, stop_docker,
         },
-        event::cmp_period,
+        event::{cmp_period, primitive_now},
         user::is_admin,
     },
     pages::{auth_session, Error, Result, ResultFlashExt},
@@ -352,7 +351,7 @@ async fn solve(
     id: i32,
     solve: Form<Solve<'_>>,
 ) -> Result<Flash<Redirect>> {
-    if cmp_period(OffsetDateTime::now_utc()) == Ordering::Greater {
+    if cmp_period(primitive_now()) == Ordering::Greater {
         return Err(Error::redirect(
             uri!(ROOT, detail(id)),
             "禁止在比赛结束后提交 Flag",

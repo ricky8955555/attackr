@@ -32,6 +32,7 @@ koto_tempfile = { version = "0.14.1", optional = true }
 log = "0.4.22"
 moka = { version = "0.12.8", features = ["future"] }
 num_enum = "0.7.3"
+rand = { version = "0.9.1", default-features = false, features = ["thread_rng", "std"] }
 rocket = { version = "0.5.1", features = ["json"] }
 rocket_dyn_templates = { version = "0.2.0", features = ["minijinja"] }
 rocket_sync_db_pools = { version = "0.1.0", features = ["diesel_sqlite_pool"] }

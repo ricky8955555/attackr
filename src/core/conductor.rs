@@ -11,6 +11,7 @@ use bollard::{
 };
 use flate2::{write::GzEncoder, Compression};
 use futures_util::StreamExt;
+use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -374,19 +375,29 @@ pub async fn run_docker(
     options.validate()?;
     let states = TempDir::new().await?;
 
+    let mut ports: Vec<_> = options.ports.clone().unwrap_or(1024..=65535u16).collect();
+
+    {
+        let mut rng = rand::rng();
+        ports.shuffle(&mut rng);
+    }
+    // rng is not 'Send' and not needed below, drop here.
+
     let ports: HashMap<_, _> = artifact
         .config
         .exposed
         .iter()
         .cloned()
         .zip(
-            options
-                .ports
-                .clone()
-                .unwrap_or(1..=65535u16)
+            ports
+                .into_iter()
                 .filter(|port| options.addrs.iter().all(|addr| is_port_free(*addr, *port))),
         )
         .collect();
+
+    if ports.len() < artifact.config.exposed.len() {
+        bail!("no enough ports available.");
+    }
 
     let docker = Docker::connect_with_defaults()?;
 
